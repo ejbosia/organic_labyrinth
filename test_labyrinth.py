@@ -36,15 +36,17 @@ def test_resample():
         k0=0,
         k1=0,
         kmin=0,
-        kmax=0.5,
+        kmax=0.3,
     )
 
     l = Labyrinth(points, config)
-
     assert len(l.points) == 4
 
-    l.resample()
-
+    l.resample() # should add mid points to each line segment
     assert len(l.points) == 8
 
-    
+    l.resample() # should add mid points to each line segment
+    assert len(l.points) == 16
+
+    l.resample() # should not add mid points to each line segments
+    assert len(l.points) == 16
