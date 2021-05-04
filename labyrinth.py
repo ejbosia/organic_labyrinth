@@ -19,22 +19,15 @@ from logging import Logger, INFO, DEBUG
 
 from shapely_utilities import sample
 
-from numba import jit
+from numba import jit, void, double
+
+from numba import types
+from numba.typed import Dict
+
 import numpy as np
 
 logger = Logger(__name__)
 logger.setLevel(DEBUG)
-
-@dataclass(frozen = True)
-class Config:
-    A: float
-    B: float
-    F: float
-    k0: float
-    k1: float
-    kmin: float
-    kmax: float
-
 
 
 @jit(nopython=True)
@@ -46,9 +39,9 @@ def closest(A,B,C):
     dp = np.dot(e1, e2)
 
     if dp < 0:
-        return A
+        return np.array(A)
     if dp > np.dot(e1,e1):
-        return B
+        return np.array(B)
 
     len2 = e1[0] * e1[0] + e1[1] * e1[1]
 
@@ -56,202 +49,181 @@ def closest(A,B,C):
 
 
 '''
-Labyrinth class
-This class runs the labyrinth generation code. It takes in a set of points to process, and a Config object
+Calculate a brownian motion vector
 '''
-class Labyrinth:
+@jit(nopython=True)
+def brownian_force(D, d):    
+    d = normalvariate(0,1) * D * d
+    a = random() * pi * 2    # angle between 0 and 2PI
+    return (d*cos(a), d*sin(a))
 
-    '''
-    Parameters:
-     - list of Point objects
-     - Config instance
-    '''
-    def __init__(self, points, D, config:Config):
-
-        self.points = np.array(points, float)
-
-        assert type(config) == Config
-        self.config = config
-
-        self.D = D
-        self.d = 1
-
-        self.R0 = self.config.k0 * self.D
-        self.R1 = (self.config.k1 * self.D)
-        self.R12 = self.R1**2
-
-    '''
-    Calculate a brownian motion vector
-    '''
-    def _brownian_force(self):    
-        d = normalvariate(0,1) * self.D * self.d
-        a = random() * pi * 2    # angle between 0 and 2PI
-        return (d*cos(a), d*sin(a))
-
-
-    def _neighbor_indices(self, i1):
-        i0 = i1 - 1 if i1 > 0 else len(self.points)-1
-        i2 = i1 + 1 if i1+1 < len(self.points) else 0
-        
-        return i0, i1, i2
-
-    '''
-    Calculate the smoothing force on a point (at index i1)
-    '''
-    def _smoothing_force(self, i1):
-
-        i0, i1, i2 = self._neighbor_indices(i1)
-
-        p0 = self.points[i0]
-        p1 = self.points[i1]
-        p2 = self.points[i2]
-
-        d0 = np.sqrt((p1[0]-p0[0])**2 + (p1[1]-p0[1])**2)
-        d2 = np.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
-
-        dx = (p0[0]*d2+p2[0]*d0)/(d0+d2) - p1[0]
-        dy = (p0[1]*d2+p2[1]*d0)/(d0+d2) - p1[1]
-
-        return (dx, dy)
+@jit(nopython=True)
+def neighbor_indices(i1, length):
+    i0 = i1 - 1 if i1 > 0 else length-1
+    i2 = i1 + 1 if i1+1 < length else 0
     
+    return [i0, i1, i2]
 
-    def _lennard_jones(self, r):
-        if r > self.R1:
-            return 0
+'''
+Calculate the smoothing force on a point (at index i1)
+'''
+@jit(nopython=True)
+def smoothing_force(i0,i1,i2,points):
 
-        return (self.R0/r)**12 - (self.R0/r)**6
+    p0 = points[i0]
+    p1 = points[i1]
+    p2 = points[i2]
 
-    '''
-    Calculate the push pull force on a point
-     - only include points within a distance
-     - use lennard jones potential to get the force
-    '''
-    def _pushpull_force(self, i1):
-                
-        # get the neighbor indices
-        i0, i1, i2 = self._neighbor_indices(i1)
+    d0 = np.sqrt((p1[0]-p0[0])**2 + (p1[1]-p0[1])**2)
+    d2 = np.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+
+    dx = (p0[0]*d2+p2[0]*d0)/(d0+d2) - p1[0]
+    dy = (p0[1]*d2+p2[1]*d0)/(d0+d2) - p1[1]
+
+    return (dx, dy)
+
+
+'''
+Calculate the push pull force on a point
+    - only include points within a distance
+    - use lennard jones potential to get the force
+'''
+@jit(nopython=True)
+def pushpull_force(i0,i1,i2, points, config, d):
+
+    # get the point
+    p1 = points[i1]
+
+    avoid = {i0,i1,i2}
+
+    dx = 0
+    dy = 0
+
+    # determine the valid points by comparing each linestring
+    for i in range(len(points)-1):
         
-        # get the point
-        p1 = self.points[i1]
-
-        avoid = {i0,i1,i2}
-
-        dx = 0
-        dy = 0
-
-        # determine the valid points by comparing each linestring
-        for i in range(len(self.points)-1):
-            
-            if i in avoid or i+1 in avoid or -1 in avoid:
-                continue
-           
-            p2 = closest(self.points[i], self.points[i+1], p1)
-            
-            if abs(p1[0]-p2[0]) > self.R1 or abs(p1[1]-p2[1]) > self.R1:
-                continue
-            
-            d2 = (p1[0]-p2[0])**2+(p1[1]-p2[1])**2
-
-            if d2 < self.R12:
-
-                dis = np.sqrt(d2)
-
-                E = self._lennard_jones(dis/(self.D * self.d))
-                                        
-                dx += E * (p1[0]-p2[0])/dis
-                dy += E * (p1[1]-p2[1])/dis
+        if i in avoid or i+1 in avoid or -1 in avoid:
+            continue
         
-        # clamp the force to D
-        d = sqrt(dx**2+dy**2)
-        if d > 20:
-            dx = dx/d * 20
-            dy = dy/d * 20
+        p2 = closest(points[i], points[i+1], p1)
+        
+        if abs(p1[0]-p2[0]) > config["R1"] or abs(p1[1]-p2[1]) > config["R1"]:
+            continue
+        
+        d2 = (p1[0]-p2[0])**2+(p1[1]-p2[1])**2
 
-        return (dx, dy)
+        if d2 < config["R12"]:
 
+            dis = np.sqrt(d2)
 
-    '''
-    Run an update step on the points
-    '''
-    def update(self):
+            r = dis/(config["D"] * d)
+
+            E = (config["R0"]/r)**12-(config["R0"]/r)**6 
+                                    
+            dx += E * (p1[0]-p2[0])/dis
+            dy += E * (p1[1]-p2[1])/dis
     
-        bx = by = fx = fy = ax = ay = 0
+    # clamp the force to D
+    d = sqrt(dx**2+dy**2)
+    if d > 20:
+        dx = dx/d * 20
+        dy = dy/d * 20
+
+    return (dx, dy)
+
+
+'''
+Run an update step on the points
+'''
+@jit(nopython=True)
+def update(points, config, d):
+
+    bx = 0
+    by = 0
+    fx = 0
+    fy = 0
+    ax = 0
+    ay = 0
+    
+    length = len(points)
+
+    # calculate the force vectors for every point and update the point
+    for i in range(len(points)):
         
-        # calculate the force vectors for every point and update the point
-        for i,p in enumerate(self.points):
+        i0,i1,i2 = neighbor_indices(i, length)
+
+        if config["B"] > 0:
+            b = brownian_force(config["D"], d)
+        if config["F"] > 0:
+            f = smoothing_force(i0,i1,i2, points)
+        if config["A"] > 0:
+            a = pushpull_force(i0,i1,i2, points, config, d)
             
-            if self.config.B > 0:
-                bx,by = self._brownian_force()
-            if self.config.F > 0:
-                fx,fy = self._smoothing_force(i)
-            if self.config.A > 0:
-                ax,ay = self._pushpull_force(i)
-                
-            self.points[i][0] += self.config.B*bx + self.config.F*fx + self.config.A*ax
-            self.points[i][1] += self.config.B*by + self.config.F*fy + self.config.A*ay
-            
+        points[i][0] += config["B"]*b[0] + config["F"]*f[0] + config["A"]*a[0]
+        points[i][1] += config["B"]*b[1] + config["F"]*f[1] + config["A"]*a[1]
 
-    def _bisect(self, p0, p1):
 
-        x = (p1[0]-p0[0])/2+p0[0]
-        y = (p1[1]-p0[1])/2+p0[1]
+@jit(nopython=True)
+def _bisect(self, p0, p1):
 
-        return (x,y)
+    x = (p1[0]-p0[0])/2+p0[0]
+    y = (p1[1]-p0[1])/2+p0[1]
 
-    ''' 
-    Run a resampling of the points:
-     - remove point if next closer than kmin*D
-     - add a bisecting point if next is farther than kmax*D
-    '''
-    def resample(self):
+    return (x,y)
+
+''' 
+Run a resampling of the points:
+    - remove point if next closer than kmin*D
+    - add a bisecting point if next is farther than kmax*D
+'''
+@jit(nopython=True)
+def resample(points, config, d):
+    
+    additions = []
+    new_points = []
+
+    removals = []
+
+    dmax = (config["kmax"] * config["D"])**2
+    dmin = (config["kmin"] * config["D"])**2
+
+    i = 0
+
+    # loop through every point in the list
+    # - this adjusts the index to match additions and deletions
+    for i in range(len(points)):
         
-        additions = []
-        new_points = []
-
-        removals = []
-
-        dmax = (self.config.kmax * self.D)**2
-        dmin = (self.config.kmin * self.D)**2
-
-        i = 0
-
-        # loop through every point in the list
-        # - this adjusts the index to match additions and deletions
-        for i in range(len(self.points)):
-            
-            p0 = self.points[i-1]
-            p1 = self.points[i]
-            
-            dis = (p0[0] - p1[0])**2 + (p0[1] - p1[1])**2
-
-            if dis > dmax:
-                # add the point
-                new_points.append(self._bisect(p0,p1))
-                additions.append(i)
-            elif dis < dmin:
-                removals.append(i + len(additions))
-
-        if additions:
-            self.points = np.insert(self.points, additions, new_points, axis=0)
-
-        # remove the points
-        mask = np.ones(len(self.points), np.bool)
-        mask[removals] = 0
-        self.points = self.points[mask]
+        p0 = points[i-1]
+        p1 = points[i]
         
-    def plot(self):
-        pyplot.plot(self.points[:,0],self.points[:,1])
+        dis = (p0[0] - p1[0])**2 + (p0[1] - p1[1])**2
+
+        if dis > dmax:
+            # add the point
+            new_points.append(_bisect(p0,p1))
+            additions.append(i)
+        elif dis < dmin:
+            removals.append(i + len(additions))
+
+    if additions:
+        points = np.insert(points, additions, new_points, axis=0)
+
+    # remove the points
+    mask = np.ones(len(points), np.bool)
+    mask[removals] = 0
+    points = points[mask]
+
+
+
 
 
 def main():
-
-    # ls = Point((0,0)).buffer(5).exterior
     
     ls = LineString([(0,0), (0,5), (5,5), (5,0)])
     
     points = sample(ls, 1)
 
-    points = [(p.x,p.y) for p in points]
+    points = np.array([(p.x,p.y) for p in points])
 
     # config = Config(
     #     A=1,
@@ -262,29 +234,37 @@ def main():
     #     kmin=0.2,
     #     kmax=0.6,
     # )
-    config = Config(
-        A=0.01,
-        B=0.05,
-        F=0.1,
-        k0=1,
-        k1=3,
-        kmin= 0.2,
-        kmax= 0.6,
+    config = Dict.empty(
+        key_type=types.unicode_type,
+        value_type = types.float64
     )
-
-    l = Labyrinth(points, 1, config)
     
-    l.plot()
+    
+    config["A"] = 0.01
+    config["B"] = 0.05
+    config["F"] = 0.1
+    config["k0"] = 1 
+    config["k1"] = 3
+    config["kmin"] = 0.2
+    config["kmax"] = 0.6
+    config["D"] = 1
 
+    config["R0"] = config["k0"] * config["D"]
+    config["R1"] = config["k1"] * config["D"]
+    config["R12"] = config["R1"]**2
+    
     P = 1
 
+    d = 1
+
     for i in range(100):
-        l.update()
-        l.resample()
+        update(points, config, d)
+        resample(points, config, d)
         
         if i % P == P-1:
             pyplot.clf()
-            l.plot()
+            pyplot.plot(points[:,0],points[:,1])
+
             pyplot.title(i)
             pyplot.pause(0.05)
 
