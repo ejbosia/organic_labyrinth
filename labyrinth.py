@@ -39,9 +39,9 @@ def closest(A,B,C):
     dp = np.dot(e1, e2)
 
     if dp < 0:
-        return np.array(A)
+        return A
     if dp > np.dot(e1,e1):
-        return np.array(B)
+        return B
 
     len2 = e1[0] * e1[0] + e1[1] * e1[1]
 
@@ -164,7 +164,7 @@ def update(points, config, d):
 
 
 @jit(nopython=True)
-def _bisect(self, p0, p1):
+def _bisect(p0, p1):
 
     x = (p1[0]-p0[0])/2+p0[0]
     y = (p1[1]-p0[1])/2+p0[1]
@@ -176,7 +176,6 @@ Run a resampling of the points:
     - remove point if next closer than kmin*D
     - add a bisecting point if next is farther than kmax*D
 '''
-@jit(nopython=True)
 def resample(points, config, d):
     
     additions = []
@@ -219,7 +218,7 @@ def resample(points, config, d):
 
 def main():
     
-    ls = LineString([(0,0), (0,5), (5,5), (5,0)])
+    ls = LinearRing([(0,0), (0,5), (5,5), (5,0)])
     
     points = sample(ls, 1)
 
@@ -240,24 +239,28 @@ def main():
     )
     
     
-    config["A"] = 0.01
+    config["A"] = 0.006
     config["B"] = 0.05
     config["F"] = 0.1
-    config["k0"] = 1 
-    config["k1"] = 3
+    config["k0"] = 1.0 
+    config["k1"] = 10.0
     config["kmin"] = 0.2
     config["kmax"] = 0.6
-    config["D"] = 1
+    config["D"] = 1.0
 
     config["R0"] = config["k0"] * config["D"]
     config["R1"] = config["k1"] * config["D"]
     config["R12"] = config["R1"]**2
     
     P = 1
-
     d = 1
 
-    for i in range(100):
+    pyplot.plot(points[:,0],points[:,1])
+    pyplot.pause(1)
+
+
+
+    for i in range(1000):
         update(points, config, d)
         resample(points, config, d)
         
