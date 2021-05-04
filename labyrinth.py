@@ -227,7 +227,7 @@ class Labyrinth:
 
 def main():
 
-    ls = LinearRing([(0,0),(0,10),(10,10),(10,0)])
+    ls = LinearRing([(0,0),(0,5),(5,5),(5,0)])
     points = sample(ls, 1)
 
     # config = Config(
@@ -240,11 +240,11 @@ def main():
     #     kmax=0.6,
     # )
     config = Config(
-        A=0.006,
-        B=0.02,
+        A=0.01,
+        B=0.005,
         F=0.05,
         k0=1,
-        k1=20,
+        k1=3,
         kmin=0.2,
         kmax=0.6,
     )
@@ -257,9 +257,9 @@ def main():
     
     l.plot()
 
-    P = 3
+    P = 1
 
-    for i in range(100):
+    for i in range(50):
         l.update()
         l.resample()
         
@@ -267,7 +267,6 @@ def main():
             pyplot.clf()
             l.plot()
             pyplot.pause(0.05)
-        print(i, end=" ")
     
     pyplot.show()
 
