@@ -35,6 +35,26 @@ class Config:
     kmin: float
     kmax: float
 
+
+
+@jit(nopython=True)
+def closest(A,B,C):
+
+    e1 = np.array([B[0] - A[0], B[1] - A[1]])
+    e2 = np.array([C[0] - A[0], C[1] - A[1]])
+
+    dp = np.dot(e1, e2)
+
+    if dp < 0:
+        return A
+    if dp > np.dot(e1,e1):
+        return B
+
+    len2 = e1[0] * e1[0] + e1[1] * e1[1]
+
+    return np.array(((A[0] + (dp * e1[0]) / len2),(A[1] + (dp * e1[1]) / len2)))
+
+
 '''
 Labyrinth class
 This class runs the labyrinth generation code. It takes in a set of points to process, and a Config object
@@ -68,6 +88,7 @@ class Labyrinth:
         a = random() * pi * 2    # angle between 0 and 2PI
         return (d*cos(a), d*sin(a))
 
+
     def _neighbor_indices(self, i1):
         i0 = i1 - 1 if i1 > 0 else len(self.points)-1
         i2 = i1 + 1 if i1+1 < len(self.points) else 0
@@ -85,11 +106,11 @@ class Labyrinth:
         p1 = self.points[i1]
         p2 = self.points[i2]
 
-        d0 = p1.distance(p0)
-        d2 = p1.distance(p2)
+        d0 = np.sqrt((p1[0]-p0[0])**2 + (p1[1]-p0[1])**2)
+        d2 = np.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
 
-        dx = (p0.x*d2+p2.x*d0)/(d0+d2) - p1.x
-        dy = (p0.y*d2+p2.y*d0)/(d0+d2) - p1.y
+        dx = (p0[0]*d2+p2[0]*d0)/(d0+d2) - p1[0]
+        dy = (p0[1]*d2+p2[1]*d0)/(d0+d2) - p1[1]
 
         return (dx, dy)
     
@@ -106,9 +127,7 @@ class Labyrinth:
      - use lennard jones potential to get the force
     '''
     def _pushpull_force(self, i1):
-        
-        valid = []
-        
+                
         # get the neighbor indices
         i0, i1, i2 = self._neighbor_indices(i1)
         
@@ -117,43 +136,36 @@ class Labyrinth:
 
         avoid = {i0,i1,i2}
 
+        dx = 0
+        dy = 0
+
         # determine the valid points by comparing each linestring
         for i in range(len(self.points)-1):
             
-            if i in avoid or i+1 in avoid:
+            if i in avoid or i+1 in avoid or -1 in avoid:
                 continue
            
-            ls = LineString(self.points[i:i+2])
-
-            p2 = ls.interpolate(ls.project(p1))
+            p2 = closest(self.points[i], self.points[i+1], p1)
             
-            if abs(p1.x-p2.x) > self.R1 or abs(p1.y-p2.y) > self.R1:
+            if abs(p1[0]-p2[0]) > self.R1 or abs(p1[1]-p2[1]) > self.R1:
                 continue
+            
+            d2 = (p1[0]-p2[0])**2+(p1[1]-p2[1])**2
 
-            if (p1.x-p2.x)**2+(p1.y-p2.y)**2 < self.R12:
-                valid.append(ls.interpolate(ls.project(p1)))
-                
-        
-        # get the forces
-        dx = 0
-        dy = 0
-        
-        for p in valid:
+            if d2 < self.R12:
 
-            dis = p1.distance(p)
-    
-            if dis > 0:
-                E = _lennard_jones(dis/(self.D * self.d))
+                dis = np.sqrt(d2)
+
+                E = self._lennard_jones(dis/(self.D * self.d))
                                         
-                dx += E * (p1.x-p.x)/dis
-                dy += E * (p1.y-p.y)/dis
+                dx += E * (p1[0]-p2[0])/dis
+                dy += E * (p1[1]-p2[1])/dis
         
         # clamp the force to D
         d = sqrt(dx**2+dy**2)
         if d > 20:
             dx = dx/d * 20
             dy = dy/d * 20
-
 
         return (dx, dy)
 
@@ -175,11 +187,9 @@ class Labyrinth:
             if self.config.A > 0:
                 ax,ay = self._pushpull_force(i)
                 
-            x = p.x + self.config.B*bx + self.config.F*fx + self.config.A*ax
-            y = p.y + self.config.B*by + self.config.F*fy + self.config.A*ay
+            self.points[i][0] += self.config.B*bx + self.config.F*fx + self.config.A*ax
+            self.points[i][1] += self.config.B*by + self.config.F*fy + self.config.A*ay
             
-            self.points[i] = Point((x,y))
-
 
     def _bisect(self, p0, p1):
 
@@ -221,8 +231,6 @@ class Labyrinth:
             elif dis < dmin:
                 removals.append(i + len(additions))
 
-        print(new_points, additions)
-
         if additions:
             self.points = np.insert(self.points, additions, new_points, axis=0)
 
@@ -231,23 +239,16 @@ class Labyrinth:
         mask[removals] = 0
         self.points = self.points[mask]
         
-        print(self.points)
-
     def plot(self):
-
-        X = []
-        Y = []
-
-        for p in self.points:
-            X.append(p.x)
-            Y.append(p.y)
-
-        pyplot.plot(X,Y)
+        pyplot.plot(self.points[:,0],self.points[:,1])
 
 
 def main():
 
-    ls = Point((0,0)).buffer(5).exterior
+    # ls = Point((0,0)).buffer(5).exterior
+    
+    ls = LineString([(0,0), (0,5), (5,5), (5,0)])
+    
     points = sample(ls, 1)
 
     points = [(p.x,p.y) for p in points]
@@ -263,23 +264,21 @@ def main():
     # )
     config = Config(
         A=0.01,
-        B=0.01,
-        F=0.05,
+        B=0.05,
+        F=0.1,
         k0=1,
-        k1=2,
-        kmin=0.2,
-        kmax=0.6,
+        k1=3,
+        kmin= 0.2,
+        kmax= 0.6,
     )
 
-    # should oscillate between 4 and 8 points
-
-    l = Labyrinth(points, config)
+    l = Labyrinth(points, 1, config)
     
     l.plot()
 
     P = 1
 
-    for i in range(50):
+    for i in range(100):
         l.update()
         l.resample()
         
@@ -288,6 +287,9 @@ def main():
             l.plot()
             pyplot.title(i)
             pyplot.pause(0.05)
+
+        # l.d -= 0.001
+
     
     pyplot.show()
 
