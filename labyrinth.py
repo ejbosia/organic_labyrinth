@@ -13,7 +13,7 @@ from random import normalvariate, random
 from dataclasses import dataclass
 
 from matplotlib import pyplot
-from matplotlib.animation import FuncAnimation
+from matplotlib.animation import FuncAnimation, PillowWriter
 
 from logging import Logger, INFO, DEBUG
 
@@ -212,13 +212,14 @@ def resample(points, config, d):
     mask[removals] = 0
     points = points[mask]
 
+    return points
 
 
 
 
 def main():
     
-    ls = LinearRing([(0,0), (0,5), (5,5), (5,0)])
+    ls = LinearRing([(-2,-2), (-2,2), (2,2), (2,-2)])
     
     points = sample(ls, 1)
 
@@ -254,28 +255,49 @@ def main():
     
     P = 1
     d = 1
+    
+    fig = pyplot.figure()
+    axis = pyplot.axes(xlim=(-20, 20),  ylim=(-20, 20))
+    pyplot.gca().set_axis_off()
+    line, = axis.plot([], [], lw=3)
 
-    pyplot.plot(points[:,0],points[:,1])
-    pyplot.pause(1)
 
-
-
-    for i in range(1000):
-        update(points, config, d)
-        resample(points, config, d)
+    '''
+    This class is used just to clean up the code
+    '''
+    class Maze:
         
-        if i % P == P-1:
-            pyplot.clf()
-            pyplot.plot(points[:,0],points[:,1])
+        def __init__(self, points, config, line, d):
+            self.points = points
+            self.config = config
+            self.line = line
+            self.d = d
+            
+        def maze_animation(self, frame_number):
+            
+            update(self.points, self.config, self.d)
+            self.points = resample(self.points, self.config, self.d)
+            
+            # connect the start and the end
+            p0 = self.points[0]
 
-            pyplot.title(i)
-            pyplot.pause(0.05)
+            line.set_data(list(self.points[:,0])+[p0[0]], list(self.points[:,1])+[p0[1]])
 
-        # l.d -= 0.001
+            return line,
+
 
     
-    pyplot.show()
+    maze = Maze(points, config, line, 1)
 
+    num = 200
+
+    anim = FuncAnimation(fig, maze.maze_animation, frames=num, interval=20, blit=True, save_count=num)
+
+
+    writervideo = PillowWriter(fps=10)
+    anim.save('test2.gif', writer=writervideo)
+    pyplot.close()
+    
 
 if __name__ == "__main__":
 
