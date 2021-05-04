@@ -19,6 +19,9 @@ from logging import Logger, INFO, DEBUG
 
 from shapely_utilities import sample
 
+from numba import jit
+import numpy as np
+
 logger = Logger(__name__)
 logger.setLevel(DEBUG)
 
@@ -43,16 +46,14 @@ class Labyrinth:
      - list of Point objects
      - Config instance
     '''
-    def __init__(self, points, config:Config):
+    def __init__(self, points, D, config:Config):
 
         self.points = points
 
         assert type(config) == Config
         self.config = config
 
-        # assumes even spacing
-        self.D = points[0].distance(points[1])
-
+        self.D = D
         self.d = 1
 
         self.R0 = self.config.k0 * self.D
@@ -62,12 +63,13 @@ class Labyrinth:
     '''
     Calculate a brownian motion vector
     '''
+    @jit(nopython=True)
     def _brownian_force(self):    
         d = normalvariate(0,1) * self.D * self.d
         a = random() * pi * 2    # angle between 0 and 2PI
         return (d*cos(a), d*sin(a))
 
-
+    @jit(nopython=True)
     def _neighbor_indices(self, i1):
         i0 = i1 - 1 if i1 > 0 else len(self.points)-1
         i2 = i1 + 1 if i1+1 < len(self.points) else 0
@@ -77,6 +79,7 @@ class Labyrinth:
     '''
     Calculate the smoothing force on a point (at index i1)
     '''
+    @jit(nopython=True)
     def _smoothing_force(self, i1):
 
         i0, i1, i2 = self._neighbor_indices(i1)
@@ -98,6 +101,7 @@ class Labyrinth:
      - only include points within a distance
      - use lennard jones potential to get the force
     '''
+    @jit(nopython=True)
     def _pushpull_force(self, i1):
         
         def _lennard_jones(r):
