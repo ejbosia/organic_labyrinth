@@ -32,8 +32,6 @@ class Config:
     kmin: float
     kmax: float
 
-
-
 '''
 Labyrinth class
 This class runs the labyrinth generation code. It takes in a set of points to process, and a Config object
@@ -55,6 +53,8 @@ class Labyrinth:
         # assumes even spacing
         self.D = points[0].distance(points[1])
 
+        self.d = 1
+
         self.R0 = self.config.k0 * self.D
         self.R1 = self.config.k1 * self.D
 
@@ -63,7 +63,7 @@ class Labyrinth:
     Calculate a brownian motion vector
     '''
     def _brownian_force(self):    
-        d = normalvariate(0,1) * self.D
+        d = normalvariate(0,1) * self.D * self.d
         a = random() * pi * 2    # angle between 0 and 2PI
         return (d*cos(a), d*sin(a))
 
@@ -113,12 +113,16 @@ class Labyrinth:
         
         # get the point
         p1 = self.points[i1]
-        
-        temp = self.points[i2+1:] + self.points[0:i0]
 
-        for i in range(len(temp)-1):
+        avoid = {i0,i1,i2}
+
+        # determine the valid points by comparing each linestring
+        for i in range(len(self.points)-1):
             
-            ls = LineString(temp[i:i+2])
+            if i in avoid or i+1 in avoid:
+                continue
+           
+            ls = LineString(self.points[i:i+2])
             
             if p1.distance(ls) < self.R1:
                 valid.append(ls.interpolate(ls.project(p1)))
@@ -131,20 +135,21 @@ class Labyrinth:
         for p in valid:
             
             dis = p1.distance(p)
+
+            if dis == 0:
+                print("THE HECK", p, p1, i0,i1,i2)
             
             if dis > 0:
-                E = _lennard_jones(dis/(self.D))
-                
-                angle = atan2(p1.y-p.y, p1.x-p.x)
-                        
-                dx +=  cos(angle) * E * (p1.x-p.x)/dis
-                dy +=  sin(angle) * E * (p1.y-p.y)/dis
+                E = _lennard_jones(dis/(self.D * self.d))
+                                        
+                dx += E * (p1.x-p.x)/dis
+                dy += E * (p1.y-p.y)/dis
         
         # clamp the force to D
-        # d = sqrt(dx**2+dy**2)
-        # if d > self.D:
-        #     dx = dx/d * self.D
-        #     dy = dy/d * self.D 
+        d = sqrt(dx**2+dy**2)
+        if d > 20:
+            dx = dx/d * 20
+            dy = dy/d * 20
 
 
         return (dx, dy)
@@ -171,6 +176,7 @@ class Labyrinth:
             y = p.y + self.config.B*by + self.config.F*fy + self.config.A*ay
             
             self.points[i] = Point((x,y))
+
     ''' 
     Run a resampling of the points:
      - remove point if next closer than kmin*D
@@ -185,7 +191,6 @@ class Labyrinth:
 
         i = 0
 
-        print(dmin, dmax, self.points[0].distance(self.points[1]))
         # loop through every point in the list
         # - this adjusts the index to match additions and deletions
         while i < len(self.points):
@@ -225,15 +230,25 @@ def main():
     ls = LinearRing([(0,0),(0,10),(10,10),(10,0)])
     points = sample(ls, 1)
 
+    # config = Config(
+    #     A=1,
+    #     B=0.05,
+    #     F=0.15,
+    #     k0=0.2,
+    #     k1=0.5,
+    #     kmin=0.2,
+    #     kmax=0.6,
+    # )
     config = Config(
-        A=1,
-        B=0.05,
-        F=0.15,
-        k0=0.2,
-        k1=0.5,
+        A=0.006,
+        B=0.02,
+        F=0.05,
+        k0=1,
+        k1=20,
         kmin=0.2,
         kmax=0.6,
     )
+
 
 
     # should oscillate between 4 and 8 points
@@ -242,13 +257,18 @@ def main():
     
     l.plot()
 
+    P = 3
+
     for i in range(100):
         l.update()
         l.resample()
-        print(len(l.points))
-        l.plot()
-        pyplot.pause(0.05)
-
+        
+        if i % P == P-1:
+            pyplot.clf()
+            l.plot()
+            pyplot.pause(0.05)
+        print(i, end=" ")
+    
     pyplot.show()
 
 
