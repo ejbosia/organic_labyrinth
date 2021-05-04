@@ -56,8 +56,8 @@ class Labyrinth:
         self.d = 1
 
         self.R0 = self.config.k0 * self.D
-        self.R1 = self.config.k1 * self.D
-
+        self.R1 = (self.config.k1 * self.D)
+        self.R12 = self.R1**2
 
     '''
     Calculate a brownian motion vector
@@ -123,8 +123,13 @@ class Labyrinth:
                 continue
            
             ls = LineString(self.points[i:i+2])
+
+            p2 = ls.interpolate(ls.project(p1))
             
-            if p1.distance(ls) < self.R1:
+            if abs(p1.x-p2.x) > self.R1 or abs(p1.y-p2.y) > self.R1:
+                continue
+
+            if (p1.x-p2.x)**2+(p1.y-p2.y)**2 < self.R12:
                 valid.append(ls.interpolate(ls.project(p1)))
                 
         
@@ -133,12 +138,9 @@ class Labyrinth:
         dy = 0
         
         for p in valid:
-            
-            dis = p1.distance(p)
 
-            if dis == 0:
-                print("THE HECK", p, p1, i0,i1,i2)
-            
+            dis = p1.distance(p)
+    
             if dis > 0:
                 E = _lennard_jones(dis/(self.D * self.d))
                                         
@@ -227,7 +229,7 @@ class Labyrinth:
 
 def main():
 
-    ls = LinearRing([(0,0),(0,5),(5,5),(5,0)])
+    ls = Point((0,0)).buffer(5).exterior
     points = sample(ls, 1)
 
     # config = Config(
@@ -241,10 +243,10 @@ def main():
     # )
     config = Config(
         A=0.01,
-        B=0.005,
+        B=0.01,
         F=0.05,
         k0=1,
-        k1=3,
+        k1=2,
         kmin=0.2,
         kmax=0.6,
     )
@@ -266,6 +268,7 @@ def main():
         if i % P == P-1:
             pyplot.clf()
             l.plot()
+            pyplot.title(i)
             pyplot.pause(0.05)
     
     pyplot.show()
