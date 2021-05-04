@@ -3,11 +3,12 @@
 Implementation of Organic Maxes and Labyrinths paper: http://www.dgp.toronto.edu/~karan/pdf/mazes.pdf
 
 ## TODO
-[x] Basic algorithm
-[ ] Add boundary
-[ ] User interface ~ adjust configs
-[ ] Variable scaling function
-[ ] User drawn boundaries
+ - [x] Basic algorithm
+ - [ ] Add boundary
+ - [ ] CLI parameters
+ - [ ] Variable scaling function
+ - [ ] User interface
+ - [ ] User drawn boundaries
 
 ## Installation instructions
 
@@ -22,6 +23,10 @@ These libraries can be installed using the requirements.txt file.
 ## Execution instructions
 
 *Process needs to be updated* ~ process flow is still in development. The code right now runs a preset shape, and outputs a gif of the maze generation.
+
+```bash
+python3 labyrinth.py
+```
 
 ## Example Result
 
