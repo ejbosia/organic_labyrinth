@@ -48,7 +48,7 @@ class Labyrinth:
     '''
     def __init__(self, points, D, config:Config):
 
-        self.points = points
+        self.points = np.array(points, float)
 
         assert type(config) == Config
         self.config = config
@@ -63,13 +63,11 @@ class Labyrinth:
     '''
     Calculate a brownian motion vector
     '''
-    @jit(nopython=True)
     def _brownian_force(self):    
         d = normalvariate(0,1) * self.D * self.d
         a = random() * pi * 2    # angle between 0 and 2PI
         return (d*cos(a), d*sin(a))
 
-    @jit(nopython=True)
     def _neighbor_indices(self, i1):
         i0 = i1 - 1 if i1 > 0 else len(self.points)-1
         i2 = i1 + 1 if i1+1 < len(self.points) else 0
@@ -79,7 +77,6 @@ class Labyrinth:
     '''
     Calculate the smoothing force on a point (at index i1)
     '''
-    @jit(nopython=True)
     def _smoothing_force(self, i1):
 
         i0, i1, i2 = self._neighbor_indices(i1)
@@ -96,20 +93,20 @@ class Labyrinth:
 
         return (dx, dy)
     
+
+    def _lennard_jones(self, r):
+        if r > self.R1:
+            return 0
+
+        return (self.R0/r)**12 - (self.R0/r)**6
+
     '''
     Calculate the push pull force on a point
      - only include points within a distance
      - use lennard jones potential to get the force
     '''
-    @jit(nopython=True)
     def _pushpull_force(self, i1):
         
-        def _lennard_jones(r):
-            if r > self.R1:
-                return 0
-
-            return (self.R0/r)**12 - (self.R0/r)**6
-
         valid = []
         
         # get the neighbor indices
@@ -183,41 +180,58 @@ class Labyrinth:
             
             self.points[i] = Point((x,y))
 
+
+    def _bisect(self, p0, p1):
+
+        x = (p1[0]-p0[0])/2+p0[0]
+        y = (p1[1]-p0[1])/2+p0[1]
+
+        return (x,y)
+
     ''' 
     Run a resampling of the points:
      - remove point if next closer than kmin*D
      - add a bisecting point if next is farther than kmax*D
     '''
     def resample(self):
-
+        
+        additions = []
         new_points = []
 
-        dmax = self.config.kmax * self.D
-        dmin = self.config.kmin * self.D
+        removals = []
+
+        dmax = (self.config.kmax * self.D)**2
+        dmin = (self.config.kmin * self.D)**2
 
         i = 0
 
         # loop through every point in the list
         # - this adjusts the index to match additions and deletions
-        while i < len(self.points):
+        for i in range(len(self.points)):
             
-            dis = self.points[i-1].distance(self.points[i])
+            p0 = self.points[i-1]
+            p1 = self.points[i]
+            
+            dis = (p0[0] - p1[0])**2 + (p0[1] - p1[1])**2
 
             if dis > dmax:
                 # add the point
-
-                bisect = LineString([self.points[i-1], self.points[i]]).interpolate(dis/2)
-                self.points.insert(i, bisect)
-
-                # skip the added point
-                i += 2
+                new_points.append(self._bisect(p0,p1))
+                additions.append(i)
             elif dis < dmin:
-                # remove the point
-                self.points.pop(i)
-            else:
-                # do not change the existing points
-                i += 1
+                removals.append(i + len(additions))
 
+        print(new_points, additions)
+
+        if additions:
+            self.points = np.insert(self.points, additions, new_points, axis=0)
+
+        # remove the points
+        mask = np.ones(len(self.points), np.bool)
+        mask[removals] = 0
+        self.points = self.points[mask]
+        
+        print(self.points)
 
     def plot(self):
 
@@ -235,6 +249,8 @@ def main():
 
     ls = Point((0,0)).buffer(5).exterior
     points = sample(ls, 1)
+
+    points = [(p.x,p.y) for p in points]
 
     # config = Config(
     #     A=1,
@@ -254,8 +270,6 @@ def main():
         kmin=0.2,
         kmax=0.6,
     )
-
-
 
     # should oscillate between 4 and 8 points
 
