@@ -7,14 +7,17 @@ Contains functions for creating organic labyrinths and mazes, as presented in "O
 
 from shapely.geometry import Point, LinearRing, LineString
 
-from math import sqrt, cos, sin, pi
+from math import sqrt, cos, sin, pi, atan2
 from random import normalvariate, random
 
 from dataclasses import dataclass
 
 from matplotlib import pyplot
+from matplotlib.animation import FuncAnimation
 
 from logging import Logger, INFO, DEBUG
+
+from shapely_utilities import sample
 
 logger = Logger(__name__)
 logger.setLevel(DEBUG)
@@ -28,6 +31,7 @@ class Config:
     k1: float
     kmin: float
     kmax: float
+
 
 
 '''
@@ -51,6 +55,10 @@ class Labyrinth:
         # assumes even spacing
         self.D = points[0].distance(points[1])
 
+        self.R0 = self.config.k0 * self.D
+        self.R1 = self.config.k1 * self.D
+
+
     '''
     Calculate a brownian motion vector
     '''
@@ -71,7 +79,7 @@ class Labyrinth:
     '''
     def _smoothing_force(self, i1):
 
-        i0, i1, i2 = self.neighbor_indices(index)
+        i0, i1, i2 = self._neighbor_indices(i1)
 
         p0 = self.points[i0]
         p1 = self.points[i1]
@@ -93,26 +101,26 @@ class Labyrinth:
     def _pushpull_force(self, i1):
         
         def _lennard_jones(r):
-            if r > self.config.R1:
+            if r > self.R1:
                 return 0
 
-            return (self.config.R0/r)**12 - (self.config.R0/r)**6
+            return (self.R0/r)**12 - (self.R0/r)**6
 
         valid = []
         
         # get the neighbor indices
-        i0, i1, i2 = neighbor_indices(i1, points)
+        i0, i1, i2 = self._neighbor_indices(i1)
         
         # get the point
         p1 = self.points[i1]
         
         temp = self.points[i2+1:] + self.points[0:i0]
 
-        for i in range(temp):
+        for i in range(len(temp)-1):
             
-            ls = LineString(temp[i], temp[i+1])
+            ls = LineString(temp[i:i+2])
             
-            if p1.distance(ls) < R1 * delta:
+            if p1.distance(ls) < self.R1:
                 valid.append(ls.interpolate(ls.project(p1)))
                 
         
@@ -124,36 +132,45 @@ class Labyrinth:
             
             dis = p1.distance(p)
             
-            E = _lennard_jones(p.distance(p1)/(D*delta))
-            
-            angle = np.arctan2(p1.x-p.x, p1.y-p.y)
-                    
-            dx +=  np.cos(angle) * E * (p1.x-p.x)/dis
-            dy +=  np.sin(angle) * E * (p1.y-p.y)/dis
+            if dis > 0:
+                E = _lennard_jones(dis/(self.D))
+                
+                angle = atan2(p1.y-p.y, p1.x-p.x)
+                        
+                dx +=  cos(angle) * E * (p1.x-p.x)/dis
+                dy +=  sin(angle) * E * (p1.y-p.y)/dis
         
+        # clamp the force to D
+        # d = sqrt(dx**2+dy**2)
+        # if d > self.D:
+        #     dx = dx/d * self.D
+        #     dy = dy/d * self.D 
+
+
         return (dx, dy)
 
 
     '''
     Run an update step on the points
     '''
-    def update(self, dis, delta):
+    def update(self):
     
-        bx,by,fx,fy,ax,ay = 0
+        bx = by = fx = fy = ax = ay = 0
         
         # calculate the force vectors for every point and update the point
         for i,p in enumerate(self.points):
             
             if self.config.B > 0:
-                bx,by = self.brownian()
+                bx,by = self._brownian_force()
             if self.config.F > 0:
-                fx,fy = self.smoothing(i)
+                fx,fy = self._smoothing_force(i)
             if self.config.A > 0:
-                ax,ay = pushpull(i)
+                ax,ay = self._pushpull_force(i)
                 
-            self.points[i].x = p.x + B*bx + F*fx + A*ax
-            self.points[i].y = p.y + B*by + F*fy + A*ay
-    
+            x = p.x + self.config.B*bx + self.config.F*fx + self.config.A*ax
+            y = p.y + self.config.B*by + self.config.F*fy + self.config.A*ay
+            
+            self.points[i] = Point((x,y))
     ''' 
     Run a resampling of the points:
      - remove point if next closer than kmin*D
@@ -168,8 +185,7 @@ class Labyrinth:
 
         i = 0
 
-        print(self.points)
-
+        print(dmin, dmax, self.points[0].distance(self.points[1]))
         # loop through every point in the list
         # - this adjusts the index to match additions and deletions
         while i < len(self.points):
@@ -192,31 +208,49 @@ class Labyrinth:
                 i += 1
 
 
+    def plot(self):
+
+        X = []
+        Y = []
+
+        for p in self.points:
+            X.append(p.x)
+            Y.append(p.y)
+
+        pyplot.plot(X,Y)
+
 
 def main():
 
-    points = [(0,0),(0,1),(1,1),(1,0)]
-    points = [Point(p) for p in points]
+    ls = LinearRing([(0,0),(0,10),(10,10),(10,0)])
+    points = sample(ls, 1)
 
     config = Config(
-        A=0,
-        B=0,
-        F=0,
-        k0=0,
-        k1=0,
-        kmin=0.6,
-        kmax=0.9,
+        A=1,
+        B=0.05,
+        F=0.15,
+        k0=0.2,
+        k1=0.5,
+        kmin=0.2,
+        kmax=0.6,
     )
 
 
     # should oscillate between 4 and 8 points
 
     l = Labyrinth(points, config)
-    print(len(l.points))
-    l.resample()
-    print(len(l.points))
-    l.resample()
-    print(len(l.points))
+    
+    l.plot()
+
+    for i in range(100):
+        l.update()
+        l.resample()
+        print(len(l.points))
+        l.plot()
+        pyplot.pause(0.05)
+
+    pyplot.show()
+
 
 if __name__ == "__main__":
 

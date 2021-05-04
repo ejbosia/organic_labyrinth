@@ -25,7 +25,6 @@ def test_init():
 
 def test_resample():
 
-
     points = [(0,0),(0,1),(1,1),(1,0)]
     points = [Point(p) for p in points]
 
@@ -50,3 +49,27 @@ def test_resample():
 
     l.resample() # should not add mid points to each line segments
     assert len(l.points) == 16
+
+    config = Config(
+        A=0,
+        B=0,
+        F=0,
+        k0=0,
+        k1=0,
+        kmin=0.8,
+        kmax=1.2,
+    )
+
+    l2 = Labyrinth(l.points, config)
+
+    # artificially set "D" to be 1
+    l2.D = 1
+
+    assert len(l2.points) == 16
+
+    l2.resample() # should remove the midpoints of l2 until the correct distance specs are met
+    assert len(l2.points) == 4
+
+    # check that the corners remain
+    for p1,p2 in zip(points, l2.points):
+        assert p1 == p2
