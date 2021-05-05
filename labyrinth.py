@@ -89,7 +89,7 @@ Calculate the push pull force on a point
     - use lennard jones potential to get the force
 '''
 @jit(nopython=True)
-def pushpull_force(i0,i1,i2, points, config, d):
+def pushpull_force(i0,i1,i2, points, boundaries, config, d):
 
     # get the point
     p1 = points[i1]
@@ -123,6 +123,30 @@ def pushpull_force(i0,i1,i2, points, config, d):
             dx += E * (p1[0]-p2[0])/dis
             dy += E * (p1[1]-p2[1])/dis
     
+
+
+    # check the boundaries
+    # determine the valid points by comparing each linestring
+    for i in range(len(boundaries)):
+        
+        p2 = closest(boundaries[i-1], boundaries[i], p1)
+        
+        if abs(p1[0]-p2[0]) > config["R1"] or abs(p1[1]-p2[1]) > config["R1"]:
+            continue
+        
+        d2 = (p1[0]-p2[0])**2+(p1[1]-p2[1])**2
+        if d2 < config["R12"]:
+
+            dis = np.sqrt(d2)
+
+            r = dis/(config["D"] * d)
+
+            E = (config["R0"]/r)**12-(config["R0"]/r)**6 
+                                    
+            dx += E * (p1[0]-p2[0])/dis
+            dy += E * (p1[1]-p2[1])/dis
+
+
     # clamp the force to D
     d = sqrt(dx**2+dy**2)
     if d > 20:
@@ -136,7 +160,7 @@ def pushpull_force(i0,i1,i2, points, config, d):
 Run an update step on the points
 '''
 @jit(nopython=True)
-def update(points, config, d):
+def update(points, boundary, config, d):
 
     bx = 0
     by = 0
@@ -157,7 +181,7 @@ def update(points, config, d):
         if config["F"] > 0:
             f = smoothing_force(i0,i1,i2, points)
         if config["A"] > 0:
-            a = pushpull_force(i0,i1,i2, points, config, d)
+            a = pushpull_force(i0,i1,i2, points, boundary, config, d)
             
         points[i][0] += config["B"]*b[0] + config["F"]*f[0] + config["A"]*a[0]
         points[i][1] += config["B"]*b[1] + config["F"]*f[1] + config["A"]*a[1]
@@ -221,19 +245,16 @@ def main():
     
     ls = LinearRing([(-2,-2), (-2,2), (2,2), (2,-2)])
     
+
+    bls = LinearRing([(0,-10), (-10,5), (10,5)])
+
+    boundary = sample(bls,1)
+    boundary = np.array([(p.x,p.y) for p in boundary])
+
     points = sample(ls, 1)
 
     points = np.array([(p.x,p.y) for p in points])
 
-    # config = Config(
-    #     A=1,
-    #     B=0.05,
-    #     F=0.15,
-    #     k0=0.2,
-    #     k1=0.5,
-    #     kmin=0.2,
-    #     kmax=0.6,
-    # )
     config = Dict.empty(
         key_type=types.unicode_type,
         value_type = types.float64
@@ -267,15 +288,16 @@ def main():
     '''
     class Maze:
         
-        def __init__(self, points, config, line, d):
+        def __init__(self, points, boundary, config, line, d):
             self.points = points
+            self.boundary = boundary
             self.config = config
             self.line = line
             self.d = d
             
         def maze_animation(self, frame_number):
             
-            update(self.points, self.config, self.d)
+            update(self.points, self.boundary, self.config, self.d)
             self.points = resample(self.points, self.config, self.d)
             
             # connect the start and the end
@@ -287,16 +309,22 @@ def main():
 
 
     
-    maze = Maze(points, config, line, 1)
+    maze = Maze(points, boundary, config, line, 1)
 
     num = 200
 
-    anim = FuncAnimation(fig, maze.maze_animation, frames=num, interval=20, blit=True, save_count=num)
+    for i in range(num):
+        pyplot.clf()
+        maze.maze_animation(i)
+        pyplot.plot(maze.boundary[:,0], maze.boundary[:,1])
+        pyplot.plot(maze.points[:,0], maze.points[:,1])
+        pyplot.pause(0.05)
+    
+    # anim = FuncAnimation(fig, maze.maze_animation, frames=num, interval=20, blit=True, save_count=num)
 
-
-    writervideo = PillowWriter(fps=10)
-    anim.save('test2.gif', writer=writervideo)
-    pyplot.close()
+    # writervideo = PillowWriter(fps=10)
+    # anim.save('test2.gif', writer=writervideo)
+    # pyplot.close()
     
 
 if __name__ == "__main__":
