@@ -333,19 +333,21 @@ def main():
 
     num = 300
 
-    # for i in range(num):
-    #     pyplot.clf()
-    #     pyplot.title(i)
-    #     maze.maze_animation(i)
-    #     pyplot.plot(maze.boundary[:,0], maze.boundary[:,1])
-    #     pyplot.plot(maze.points[:,0], maze.points[:,1])
-    #     pyplot.pause(0.05)
+    for i in range(num):
+        pyplot.clf()
+        pyplot.title(str(i) + " " + str(config["B"]))
+        maze.maze_animation(i)
+        pyplot.plot(maze.boundary[:,0], maze.boundary[:,1])
+        pyplot.plot(maze.points[:,0], maze.points[:,1])
+        pyplot.pause(0.05)
+        # if config["B"] > 0:
+        #     config["B"] -= 0.001
     
-    anim = FuncAnimation(fig, maze.maze_animation, frames=num, interval=20, blit=True, save_count=num)
+    # anim = FuncAnimation(fig, maze.maze_animation, frames=num, interval=20, blit=True, save_count=num)
 
-    writervideo = PillowWriter(fps=10)
-    anim.save('wolf.gif', writer=writervideo)
-    pyplot.close()
+    # writervideo = PillowWriter(fps=10)
+    # anim.save('wolf.gif', writer=writervideo)
+    # pyplot.close()
     
 
 if __name__ == "__main__":
