@@ -19,12 +19,16 @@ from logging import Logger, INFO, DEBUG
 
 from shapely_utilities import sample
 
+from shapely_conversion import convert
+
 from numba import jit, void, double
 
 from numba import types
 from numba.typed import Dict
 
 import numpy as np
+import cv2
+import os
 
 logger = Logger(__name__)
 logger.setLevel(DEBUG)
@@ -149,9 +153,9 @@ def pushpull_force(i0,i1,i2, points, boundaries, config, d):
 
     # clamp the force to D
     d = sqrt(dx**2+dy**2)
-    if d > 20:
-        dx = dx/d * 20
-        dy = dy/d * 20
+    if d > config["CLAMP"]:
+        dx = dx/d * config["CLAMP"]
+        dy = dy/d * config["CLAMP"]
 
     return (dx, dy)
 
@@ -243,17 +247,29 @@ def resample(points, config, d):
 
 def main():
     
-    ls = LinearRing([(-2,-2), (-2,2), (2,2), (2,-2)])
-    
+    D = 15
 
-    bls = LinearRing([(0,-10), (-10,5), (10,5)])
+    image = cv2.imread("images/wolf.png", 0)
 
-    boundary = sample(bls,1)
+    print(not image is None)
+    image = image[:][::-1]
+    # pyplot.imshow(image)
+    # pyplot.show()
+
+    temp = convert(image)[0].exterior
+
+    b = temp.buffer(D)
+
+    bls = b.exterior
+    #ls = b.interiors[0]
+    ls = Point((500,500)).buffer(60).exterior
+
+    points = sample(ls, D)
+    points = np.array([(p.x,p.y) for p in points])
+
+    boundary = sample(bls,D)
     boundary = np.array([(p.x,p.y) for p in boundary])
 
-    points = sample(ls, 1)
-
-    points = np.array([(p.x,p.y) for p in points])
 
     config = Dict.empty(
         key_type=types.unicode_type,
@@ -265,20 +281,24 @@ def main():
     config["B"] = 0.05
     config["F"] = 0.1
     config["k0"] = 1.0 
-    config["k1"] = 10.0
+    config["k1"] = 5.0
     config["kmin"] = 0.2
     config["kmax"] = 0.6
-    config["D"] = 1.0
+    config["D"] = float(D)
 
     config["R0"] = config["k0"] * config["D"]
     config["R1"] = config["k1"] * config["D"]
     config["R12"] = config["R1"]**2
+
+    config["CLAMP"] = 20.0*D
     
+    print(config)
+
     P = 1
     d = 1
     
     fig = pyplot.figure()
-    axis = pyplot.axes(xlim=(-20, 20),  ylim=(-20, 20))
+    axis = pyplot.axes(xlim=(0, image.shape[1]),  ylim=(0, image.shape[0]))
     pyplot.gca().set_axis_off()
     line, = axis.plot([], [], lw=3)
 
@@ -311,20 +331,21 @@ def main():
     
     maze = Maze(points, boundary, config, line, 1)
 
-    num = 200
+    num = 300
 
-    for i in range(num):
-        pyplot.clf()
-        maze.maze_animation(i)
-        pyplot.plot(maze.boundary[:,0], maze.boundary[:,1])
-        pyplot.plot(maze.points[:,0], maze.points[:,1])
-        pyplot.pause(0.05)
+    # for i in range(num):
+    #     pyplot.clf()
+    #     pyplot.title(i)
+    #     maze.maze_animation(i)
+    #     pyplot.plot(maze.boundary[:,0], maze.boundary[:,1])
+    #     pyplot.plot(maze.points[:,0], maze.points[:,1])
+    #     pyplot.pause(0.05)
     
-    # anim = FuncAnimation(fig, maze.maze_animation, frames=num, interval=20, blit=True, save_count=num)
+    anim = FuncAnimation(fig, maze.maze_animation, frames=num, interval=20, blit=True, save_count=num)
 
-    # writervideo = PillowWriter(fps=10)
-    # anim.save('test2.gif', writer=writervideo)
-    # pyplot.close()
+    writervideo = PillowWriter(fps=10)
+    anim.save('wolf.gif', writer=writervideo)
+    pyplot.close()
     
 
 if __name__ == "__main__":
