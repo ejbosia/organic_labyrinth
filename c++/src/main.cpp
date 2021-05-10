@@ -7,6 +7,7 @@
 #include "point.h"
 #include "angle.h"
 #include "config.h"
+#include "maze.h"
 
 #include <stdio.h>
 // #include <opencv2/core.hpp>
@@ -45,45 +46,40 @@ int main(int argc, char** argv){
 
         for(int j = 0; j < 5; j++){
 
-            x += xDir[i];
-            y += yDir[i];
-
             current->next = new Point(x,y);
             current = current->next;
 
-            std::cout << "\t" << *current << std::endl;
+            x += xDir[i];
+            y += yDir[i];
         }
 
     }
 
-    current->next = start;
-    current = start;
+    current->next = start->next;
+    start = start->next;
     // test the loop
 
+    Config config = Config(0.05, 0.1, 0.006, 1.0, 5.0, 0.2, 0.6, 1.0, 20.0*1.0);
+
+    for(int i = 0; i < 5; i++){
+        resample(start, config);
+        update(start, config);
+    }
+
+
+    std::ofstream myfile;
+    myfile.open ("example.txt");
+    
+
+    current = start;
+    myfile << "x = [" << std::endl;
     do{
-        
-        std::cout << *current << "\t" << *current->next << "\t" << *start << std::endl;
-
+        myfile << *current << "," << std::endl;
         current = current->next;
-    
     }while(current != start);
+    myfile << "]" << std::endl;
 
-
-
-
-    // Config config;
-
-    // // run 100 steps on the maze generation
-    // for(int i = 0; i < 100;  i++){
-
-    //     // resample
-
-    //     // update
-
-
-    // }
-    
-    // output the result as a python list
+    myfile.close();
     
     return 0;
 }

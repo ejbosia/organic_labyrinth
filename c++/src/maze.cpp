@@ -3,14 +3,15 @@
 /*
 Apply brownian force to dx,dy 
 */
-void brownian(Point* point, const Config &config){
+void brownian(Point* point, const Config &config,std::default_random_engine generator, std::normal_distribution<double> normal,
+    std::uniform_real_distribution<double> distribution){
 
 
     double n = normal(generator);       // distance magnitude
     double a = distribution(generator); // angle
 
-    point->dx += n * cos(a);
-    point->dy += n * sin(a);
+    point->dx += config.B * n * cos(a);
+    point->dy += config.B * n * sin(a);
 
 }
 
@@ -23,8 +24,8 @@ void smoothing(Point* p0, Point* p1, Point* p2, const Config &config){
     double d0 = p0->distance(*p1);
     double d2 = p2->distance(*p1);
 
-    p1->dx += (p0->x*d2 + p2->x*d0)/(d0+d2) - p1->x;
-    p1->dy += (p0->y*d2 + p2->y*d0)/(d0+d2) - p1->y;
+    p1->dx += config.F * ((p0->x*d2 + p2->x*d0)/(d0+d2) - p1->x);
+    p1->dy += config.F * ((p0->y*d2 + p2->y*d0)/(d0+d2) - p1->y);
 
 }
 
@@ -44,6 +45,7 @@ void proximity(Point* point, const Config &config){
 
     // loop until the point before the last is found
     while(current->next != point){
+        // std::cout << "\t" << current->next << "\t" << point << std::endl;
 
         // only process if the distance "could" be within the range
         if((current->x - point->x < config.R1) && (current->x - point->x < config.R1)){
@@ -58,6 +60,8 @@ void proximity(Point* point, const Config &config){
                 dy += force * (point->y - current->y) / dis;
             }
         }
+
+        current = current->next;
     }
 
 
@@ -69,8 +73,8 @@ void proximity(Point* point, const Config &config){
         dy = dy/mag * config.MAX;
     }
 
-    point->dx += dx;
-    point->dy += dy;
+    point->dx += config.A * dx;
+    point->dy += config.A * dy;
 
 }
 
@@ -85,28 +89,40 @@ void update(Point* start, const Config &config){
 
     double distance;
 
+    std::default_random_engine generator;
+    std::normal_distribution<double> normal(0,1.0);
+    std::uniform_real_distribution<double> distribution(0.0,M_PI*2.0);
+
     do{
 
         previous = current;
 
         current = current->next;
 
-        brownian(current, config);
+        brownian(current, config, generator, normal, distribution);
         smoothing(previous, current, current->next, config);
         proximity(current, config);
+        // std::cout << "\titer" << std::endl;
+
     
     }while(current != start);
 
-
+    std::cout << "FORCE DONE" << std::endl;
     // update the points from the forces
     do{
         
         current->x = current->x + current->dx;
         current->y = current->y + current->dy;
 
+        current->dx = 0;
+        current->dy = 0;
+
         current = current->next;
     
     }while(current != start);
+
+    std::cout << "UPDATE DONE" << std::endl;
+
 
 }
 
@@ -126,17 +142,17 @@ void resample(Point* start, const Config &config){
     do{
 
         previous = current;
-
         current = current->next;
 
         distance = current->distance(*(current->next));
-        
+
         if(distance > config.dmax){
 
             x = 0.5*(current->next->x - current->x)+current->x;
-            y = 0.5*(current->next->x - current->x)+current->y;
+            y = 0.5*(current->next->y - current->y)+current->y;
 
             current->next = new Point(x, y, current->next);
+            std::cout << *current << "\t" << current->next << std::endl;
         }
 
         if(distance < config.dmin){

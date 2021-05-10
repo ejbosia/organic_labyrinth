@@ -123,5 +123,5 @@ Point Point::operator-(const Point &p){
 }
 
 std::ostream& operator<<(std::ostream &strm, const Point &p){
-    return strm << "(" << p.x << "," << p.y << ")";
+    return strm << "(" << round(p.x*1000.0)/1000.0 << "," <<  round(p.y*1000.0)/1000.0  << ")";
 }
