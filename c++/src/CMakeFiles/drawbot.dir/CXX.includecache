@@ -1,0 +1,38 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/ejbosia/Programs/drawbot/c++/src/angle.cpp
+angle.h
+/home/ejbosia/Programs/drawbot/c++/src/angle.h
+
+/home/ejbosia/Programs/drawbot/c++/src/point.cpp
+point.h
+/home/ejbosia/Programs/drawbot/c++/src/point.h
+
+include/angle.h
+iostream
+-
+string
+-
+math.h
+-
+cmath
+-
+limits
+-
+
+include/point.h
+iostream
+-
+string
+-
+math.h
+-
+angle.h
+include/angle.h
+
