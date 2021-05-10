@@ -48,10 +48,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/ejbosia/Programs/drawbot/c++
+CMAKE_SOURCE_DIR = /home/ejbosia/Programs/labyrinths/c++
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/ejbosia/Programs/drawbot/c++
+CMAKE_BINARY_DIR = /home/ejbosia/Programs/labyrinths/c++
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -80,14 +80,14 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /home/ejbosia/Programs/drawbot/c++ && $(CMAKE_COMMAND) -E cmake_progress_start /home/ejbosia/Programs/drawbot/c++/CMakeFiles /home/ejbosia/Programs/drawbot/c++/src/CMakeFiles/progress.marks
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f CMakeFiles/Makefile2 src/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ejbosia/Programs/drawbot/c++/CMakeFiles 0
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(CMAKE_COMMAND) -E cmake_progress_start /home/ejbosia/Programs/labyrinths/c++/CMakeFiles /home/ejbosia/Programs/labyrinths/c++/src/CMakeFiles/progress.marks
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f CMakeFiles/Makefile2 src/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/ejbosia/Programs/labyrinths/c++/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f CMakeFiles/Makefile2 src/clean
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f CMakeFiles/Makefile2 src/clean
 .PHONY : clean
 
 # The main clean target
@@ -97,33 +97,33 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f CMakeFiles/Makefile2 src/preinstall
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f CMakeFiles/Makefile2 src/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f CMakeFiles/Makefile2 src/preinstall
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f CMakeFiles/Makefile2 src/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
-src/CMakeFiles/drawbot.dir/rule:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/drawbot.dir/rule
-.PHONY : src/CMakeFiles/drawbot.dir/rule
+src/CMakeFiles/labyrinth.dir/rule:
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/labyrinth.dir/rule
+.PHONY : src/CMakeFiles/labyrinth.dir/rule
 
 # Convenience name for target.
-drawbot: src/CMakeFiles/drawbot.dir/rule
+labyrinth: src/CMakeFiles/labyrinth.dir/rule
 
-.PHONY : drawbot
+.PHONY : labyrinth
 
 # fast build rule for target.
-drawbot/fast:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/build
-.PHONY : drawbot/fast
+labyrinth/fast:
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f src/CMakeFiles/labyrinth.dir/build.make src/CMakeFiles/labyrinth.dir/build
+.PHONY : labyrinth/fast
 
 angle.o: angle.cpp.o
 
@@ -131,7 +131,7 @@ angle.o: angle.cpp.o
 
 # target to build an object file
 angle.cpp.o:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/angle.cpp.o
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f src/CMakeFiles/labyrinth.dir/build.make src/CMakeFiles/labyrinth.dir/angle.cpp.o
 .PHONY : angle.cpp.o
 
 angle.i: angle.cpp.i
@@ -140,7 +140,7 @@ angle.i: angle.cpp.i
 
 # target to preprocess a source file
 angle.cpp.i:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/angle.cpp.i
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f src/CMakeFiles/labyrinth.dir/build.make src/CMakeFiles/labyrinth.dir/angle.cpp.i
 .PHONY : angle.cpp.i
 
 angle.s: angle.cpp.s
@@ -149,197 +149,35 @@ angle.s: angle.cpp.s
 
 # target to generate assembly for a file
 angle.cpp.s:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/angle.cpp.s
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f src/CMakeFiles/labyrinth.dir/build.make src/CMakeFiles/labyrinth.dir/angle.cpp.s
 .PHONY : angle.cpp.s
 
-contour.o: contour.cpp.o
+config.o: config.cpp.o
 
-.PHONY : contour.o
-
-# target to build an object file
-contour.cpp.o:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/contour.cpp.o
-.PHONY : contour.cpp.o
-
-contour.i: contour.cpp.i
-
-.PHONY : contour.i
-
-# target to preprocess a source file
-contour.cpp.i:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/contour.cpp.i
-.PHONY : contour.cpp.i
-
-contour.s: contour.cpp.s
-
-.PHONY : contour.s
-
-# target to generate assembly for a file
-contour.cpp.s:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/contour.cpp.s
-.PHONY : contour.cpp.s
-
-contour_fill_strategy.o: contour_fill_strategy.cpp.o
-
-.PHONY : contour_fill_strategy.o
+.PHONY : config.o
 
 # target to build an object file
-contour_fill_strategy.cpp.o:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/contour_fill_strategy.cpp.o
-.PHONY : contour_fill_strategy.cpp.o
+config.cpp.o:
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f src/CMakeFiles/labyrinth.dir/build.make src/CMakeFiles/labyrinth.dir/config.cpp.o
+.PHONY : config.cpp.o
 
-contour_fill_strategy.i: contour_fill_strategy.cpp.i
+config.i: config.cpp.i
 
-.PHONY : contour_fill_strategy.i
-
-# target to preprocess a source file
-contour_fill_strategy.cpp.i:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/contour_fill_strategy.cpp.i
-.PHONY : contour_fill_strategy.cpp.i
-
-contour_fill_strategy.s: contour_fill_strategy.cpp.s
-
-.PHONY : contour_fill_strategy.s
-
-# target to generate assembly for a file
-contour_fill_strategy.cpp.s:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/contour_fill_strategy.cpp.s
-.PHONY : contour_fill_strategy.cpp.s
-
-family.o: family.cpp.o
-
-.PHONY : family.o
-
-# target to build an object file
-family.cpp.o:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/family.cpp.o
-.PHONY : family.cpp.o
-
-family.i: family.cpp.i
-
-.PHONY : family.i
+.PHONY : config.i
 
 # target to preprocess a source file
-family.cpp.i:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/family.cpp.i
-.PHONY : family.cpp.i
+config.cpp.i:
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f src/CMakeFiles/labyrinth.dir/build.make src/CMakeFiles/labyrinth.dir/config.cpp.i
+.PHONY : config.cpp.i
 
-family.s: family.cpp.s
+config.s: config.cpp.s
 
-.PHONY : family.s
-
-# target to generate assembly for a file
-family.cpp.s:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/family.cpp.s
-.PHONY : family.cpp.s
-
-gcode.o: gcode.cpp.o
-
-.PHONY : gcode.o
-
-# target to build an object file
-gcode.cpp.o:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/gcode.cpp.o
-.PHONY : gcode.cpp.o
-
-gcode.i: gcode.cpp.i
-
-.PHONY : gcode.i
-
-# target to preprocess a source file
-gcode.cpp.i:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/gcode.cpp.i
-.PHONY : gcode.cpp.i
-
-gcode.s: gcode.cpp.s
-
-.PHONY : gcode.s
+.PHONY : config.s
 
 # target to generate assembly for a file
-gcode.cpp.s:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/gcode.cpp.s
-.PHONY : gcode.cpp.s
-
-intersection_strategy.o: intersection_strategy.cpp.o
-
-.PHONY : intersection_strategy.o
-
-# target to build an object file
-intersection_strategy.cpp.o:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/intersection_strategy.cpp.o
-.PHONY : intersection_strategy.cpp.o
-
-intersection_strategy.i: intersection_strategy.cpp.i
-
-.PHONY : intersection_strategy.i
-
-# target to preprocess a source file
-intersection_strategy.cpp.i:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/intersection_strategy.cpp.i
-.PHONY : intersection_strategy.cpp.i
-
-intersection_strategy.s: intersection_strategy.cpp.s
-
-.PHONY : intersection_strategy.s
-
-# target to generate assembly for a file
-intersection_strategy.cpp.s:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/intersection_strategy.cpp.s
-.PHONY : intersection_strategy.cpp.s
-
-line.o: line.cpp.o
-
-.PHONY : line.o
-
-# target to build an object file
-line.cpp.o:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/line.cpp.o
-.PHONY : line.cpp.o
-
-line.i: line.cpp.i
-
-.PHONY : line.i
-
-# target to preprocess a source file
-line.cpp.i:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/line.cpp.i
-.PHONY : line.cpp.i
-
-line.s: line.cpp.s
-
-.PHONY : line.s
-
-# target to generate assembly for a file
-line.cpp.s:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/line.cpp.s
-.PHONY : line.cpp.s
-
-linear_fill_strategy.o: linear_fill_strategy.cpp.o
-
-.PHONY : linear_fill_strategy.o
-
-# target to build an object file
-linear_fill_strategy.cpp.o:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/linear_fill_strategy.cpp.o
-.PHONY : linear_fill_strategy.cpp.o
-
-linear_fill_strategy.i: linear_fill_strategy.cpp.i
-
-.PHONY : linear_fill_strategy.i
-
-# target to preprocess a source file
-linear_fill_strategy.cpp.i:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/linear_fill_strategy.cpp.i
-.PHONY : linear_fill_strategy.cpp.i
-
-linear_fill_strategy.s: linear_fill_strategy.cpp.s
-
-.PHONY : linear_fill_strategy.s
-
-# target to generate assembly for a file
-linear_fill_strategy.cpp.s:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/linear_fill_strategy.cpp.s
-.PHONY : linear_fill_strategy.cpp.s
+config.cpp.s:
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f src/CMakeFiles/labyrinth.dir/build.make src/CMakeFiles/labyrinth.dir/config.cpp.s
+.PHONY : config.cpp.s
 
 main.o: main.cpp.o
 
@@ -347,7 +185,7 @@ main.o: main.cpp.o
 
 # target to build an object file
 main.cpp.o:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/main.cpp.o
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f src/CMakeFiles/labyrinth.dir/build.make src/CMakeFiles/labyrinth.dir/main.cpp.o
 .PHONY : main.cpp.o
 
 main.i: main.cpp.i
@@ -356,7 +194,7 @@ main.i: main.cpp.i
 
 # target to preprocess a source file
 main.cpp.i:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/main.cpp.i
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f src/CMakeFiles/labyrinth.dir/build.make src/CMakeFiles/labyrinth.dir/main.cpp.i
 .PHONY : main.cpp.i
 
 main.s: main.cpp.s
@@ -365,8 +203,35 @@ main.s: main.cpp.s
 
 # target to generate assembly for a file
 main.cpp.s:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/main.cpp.s
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f src/CMakeFiles/labyrinth.dir/build.make src/CMakeFiles/labyrinth.dir/main.cpp.s
 .PHONY : main.cpp.s
+
+maze.o: maze.cpp.o
+
+.PHONY : maze.o
+
+# target to build an object file
+maze.cpp.o:
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f src/CMakeFiles/labyrinth.dir/build.make src/CMakeFiles/labyrinth.dir/maze.cpp.o
+.PHONY : maze.cpp.o
+
+maze.i: maze.cpp.i
+
+.PHONY : maze.i
+
+# target to preprocess a source file
+maze.cpp.i:
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f src/CMakeFiles/labyrinth.dir/build.make src/CMakeFiles/labyrinth.dir/maze.cpp.i
+.PHONY : maze.cpp.i
+
+maze.s: maze.cpp.s
+
+.PHONY : maze.s
+
+# target to generate assembly for a file
+maze.cpp.s:
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f src/CMakeFiles/labyrinth.dir/build.make src/CMakeFiles/labyrinth.dir/maze.cpp.s
+.PHONY : maze.cpp.s
 
 point.o: point.cpp.o
 
@@ -374,7 +239,7 @@ point.o: point.cpp.o
 
 # target to build an object file
 point.cpp.o:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/point.cpp.o
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f src/CMakeFiles/labyrinth.dir/build.make src/CMakeFiles/labyrinth.dir/point.cpp.o
 .PHONY : point.cpp.o
 
 point.i: point.cpp.i
@@ -383,7 +248,7 @@ point.i: point.cpp.i
 
 # target to preprocess a source file
 point.cpp.i:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/point.cpp.i
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f src/CMakeFiles/labyrinth.dir/build.make src/CMakeFiles/labyrinth.dir/point.cpp.i
 .PHONY : point.cpp.i
 
 point.s: point.cpp.s
@@ -392,7 +257,7 @@ point.s: point.cpp.s
 
 # target to generate assembly for a file
 point.cpp.s:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(MAKE) -f src/CMakeFiles/drawbot.dir/build.make src/CMakeFiles/drawbot.dir/point.cpp.s
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(MAKE) -f src/CMakeFiles/labyrinth.dir/build.make src/CMakeFiles/labyrinth.dir/point.cpp.s
 .PHONY : point.cpp.s
 
 # Help Target
@@ -403,34 +268,19 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
-	@echo "... drawbot"
+	@echo "... labyrinth"
 	@echo "... angle.o"
 	@echo "... angle.i"
 	@echo "... angle.s"
-	@echo "... contour.o"
-	@echo "... contour.i"
-	@echo "... contour.s"
-	@echo "... contour_fill_strategy.o"
-	@echo "... contour_fill_strategy.i"
-	@echo "... contour_fill_strategy.s"
-	@echo "... family.o"
-	@echo "... family.i"
-	@echo "... family.s"
-	@echo "... gcode.o"
-	@echo "... gcode.i"
-	@echo "... gcode.s"
-	@echo "... intersection_strategy.o"
-	@echo "... intersection_strategy.i"
-	@echo "... intersection_strategy.s"
-	@echo "... line.o"
-	@echo "... line.i"
-	@echo "... line.s"
-	@echo "... linear_fill_strategy.o"
-	@echo "... linear_fill_strategy.i"
-	@echo "... linear_fill_strategy.s"
+	@echo "... config.o"
+	@echo "... config.i"
+	@echo "... config.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... maze.o"
+	@echo "... maze.i"
+	@echo "... maze.s"
 	@echo "... point.o"
 	@echo "... point.i"
 	@echo "... point.s"
@@ -445,6 +295,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /home/ejbosia/Programs/drawbot/c++ && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/ejbosia/Programs/labyrinths/c++ && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

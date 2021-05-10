@@ -1,4 +1,4 @@
-# Install script for directory: /home/ejbosia/Programs/drawbot/c++/src
+# Install script for directory: /home/ejbosia/Programs/labyrinths/c++/src
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

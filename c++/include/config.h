@@ -22,8 +22,8 @@ struct Config{
 
     double MAX;
 
-    Config(B,F,A,k0,k1,kmin,kmax,D, MAX);
+    Config(double B, double F,double A, double k0, double k1, double kmin, double kmax,double D, double MAX);
 
-}
+};
 
 #endif
