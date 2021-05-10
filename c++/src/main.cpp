@@ -61,9 +61,13 @@ int main(int argc, char** argv){
 
     Config config = Config(0.05, 0.1, 0.006, 1.0, 5.0, 0.2, 0.6, 1.0, 20.0*1.0);
 
-    for(int i = 0; i < 5; i++){
-        resample(start, config);
+    for(int i = 0; i < 100; i++){
+
+        std::cout << "resample";
+        start = resample(start, config);
+        std::cout << " update";
         update(start, config);
+        std::cout << i << std::endl;
     }
 
 

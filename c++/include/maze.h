@@ -21,6 +21,6 @@ void pushpull(Point* target, Point* list);
 
 void update(Point* start, const Config &config);
 
-void resample(Point* start, const Config &config);
+Point* resample(Point* start, const Config &config);
 
 #endif

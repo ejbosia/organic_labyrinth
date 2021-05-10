@@ -93,6 +93,7 @@ void update(Point* start, const Config &config){
     std::normal_distribution<double> normal(0,1.0);
     std::uniform_real_distribution<double> distribution(0.0,M_PI*2.0);
 
+    std::cout << " forces";
     do{
 
         previous = current;
@@ -107,7 +108,8 @@ void update(Point* start, const Config &config){
     
     }while(current != start);
 
-    std::cout << "FORCE DONE" << std::endl;
+    std::cout << " updates";
+
     // update the points from the forces
     do{
         
@@ -121,16 +123,13 @@ void update(Point* start, const Config &config){
     
     }while(current != start);
 
-    std::cout << "UPDATE DONE" << std::endl;
-
-
 }
 
 
 /*
 Add points to the linked list of points
 */
-void resample(Point* start, const Config &config){
+Point* resample(Point* start, const Config &config){
     
     Point* current = start;
     Point* previous = start;
@@ -140,24 +139,32 @@ void resample(Point* start, const Config &config){
     double x, y;
 
     do{
-
         previous = current;
         current = current->next;
-
         distance = current->distance(*(current->next));
-
+        
         if(distance > config.dmax){
+
 
             x = 0.5*(current->next->x - current->x)+current->x;
             y = 0.5*(current->next->y - current->y)+current->y;
 
             current->next = new Point(x, y, current->next);
-            std::cout << *current << "\t" << current->next << std::endl;
         }
 
         if(distance < config.dmin){
+
             previous->next = current->next;
+
+            if(current == start){
+                                
+                return previous;
+            }
+
+            current = previous;
         }
 
     }while(current != start);
+
+    return start;
 }
