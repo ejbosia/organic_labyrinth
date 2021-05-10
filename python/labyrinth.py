@@ -175,6 +175,8 @@ def update(points, boundary, config, d):
     
     length = len(points)
 
+    force = np.zeros(len(points))
+
     # calculate the force vectors for every point and update the point
     for i in range(len(points)):
         
@@ -187,9 +189,16 @@ def update(points, boundary, config, d):
         if config["A"] > 0:
             a = pushpull_force(i0,i1,i2, points, boundary, config, d)
             
-        points[i][0] += config["B"]*b[0] + config["F"]*f[0] + config["A"]*a[0]
-        points[i][1] += config["B"]*b[1] + config["F"]*f[1] + config["A"]*a[1]
+            
+        x = config["A"]*a[0]
+        y = config["A"]*a[1]
 
+        points[i][0] += config["F"]*f[0] + config["B"]*b[0] + x
+        points[i][1] += config["F"]*f[1] + config["B"]*b[1] + y
+
+        force[i] = sqrt(x**2+y**2)
+
+    return force
 
 @jit(nopython=True)
 def _bisect(p0, p1):
@@ -247,9 +256,9 @@ def resample(points, config, d):
 
 def main():
     
-    D = 15
+    D = 20
 
-    image = cv2.imread("images/wolf.png", 0)
+    image = cv2.imread("images/penguin.png", 0)
 
     print(not image is None)
     image = image[:][::-1]
@@ -262,7 +271,7 @@ def main():
 
     bls = b.exterior
     #ls = b.interiors[0]
-    ls = Point((500,500)).buffer(60).exterior
+    ls = Point((250,300)).buffer(60).exterior
 
     points = sample(ls, D)
     points = np.array([(p.x,p.y) for p in points])
@@ -314,11 +323,12 @@ def main():
             self.config = config
             self.line = line
             self.d = d
+            self.forces = None
             
         def maze_animation(self, frame_number):
-            
-            update(self.points, self.boundary, self.config, self.d)
             self.points = resample(self.points, self.config, self.d)
+
+            self.forces = update(self.points, self.boundary, self.config, self.d)
             
             # connect the start and the end
             p0 = self.points[0]
@@ -338,7 +348,7 @@ def main():
         pyplot.title(str(i) + " " + str(config["B"]))
         maze.maze_animation(i)
         pyplot.plot(maze.boundary[:,0], maze.boundary[:,1])
-        pyplot.plot(maze.points[:,0], maze.points[:,1])
+        pyplot.scatter(maze.points[:,0], maze.points[:,1], c=maze.forces, s=2, vmin=0, vmax=D)
         pyplot.pause(0.05)
         # if config["B"] > 0:
         #     config["B"] -= 0.001
