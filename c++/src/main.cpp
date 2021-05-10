@@ -58,16 +58,30 @@ int main(int argc, char** argv){
     current->next = start->next;
     start = start->next;
     // test the loop
+    
 
-    Config config = Config(0.05, 0.1, 0.006, 1.0, 5.0, 0.2, 0.6, 1.0, 20.0*1.0);
+    // brownian, smoothing, push pull
+    Config config = Config(0.05, 0.25, 0.004, 1.0, 5.0, 0.2, 0.6, 1.0, 20.0*1.0);
 
     for(int i = 0; i < 100; i++){
 
-        std::cout << "resample";
         start = resample(start, config);
-        std::cout << " update";
         update(start, config);
-        std::cout << i << std::endl;
+        std::cout << " ITERATIONS: " <<  i << std::endl;
+    }
+
+    //smooth the result
+    config.kmax = 1.2;
+    config.kmin = 0.2;
+    config.B = 0.0;
+    config.A = 0.005;
+    config.F = 0.3;
+    
+    for(int i = 0; i < 10; i++){
+
+        start = resample(start, config);
+        update(start, config);
+        std::cout << " ITERATIONS: " <<  i << std::endl;
     }
 
 
