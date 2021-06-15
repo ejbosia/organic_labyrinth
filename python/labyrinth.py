@@ -262,15 +262,12 @@ def main():
 
     print(not image is None)
     image = image[:][::-1]
-    # pyplot.imshow(image)
-    # pyplot.show()
 
     temp = convert(image)[0].exterior
 
     b = temp.buffer(D)
 
     bls = b.exterior
-    #ls = b.interiors[0]
     ls = Point((250,300)).buffer(60).exterior
 
     points = sample(ls, D)
