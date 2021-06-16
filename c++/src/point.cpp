@@ -21,14 +21,21 @@ Point::Point(double x, double y, Point* next){
     available = true;
 }
 
+
+double Point::sq_distance(const Point &other){
+    double dx = x - other.x;
+    double dy = y - other.y;
+
+    return pow(dx,2.0) + pow(dy,2.0);
+}
+
+
 /*
 Return the distance to another point
 */
-double Point::distance(Point &other){
-    double dx = x - other.x;
-    double dy = y - other.y;
-    
-    return sqrt(pow(dx,2.0) + pow(dy,2.0));
+double Point::distance(const Point &other){
+
+    return sqrt(sq_distance(other));
 }
 
 Angle Point::angle(Point& other){
