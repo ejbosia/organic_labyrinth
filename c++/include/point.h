@@ -20,8 +20,9 @@ struct Point{
     Point();
     Point(double x, double y);
     Point(double x, double y, Point* next);
-
-    double distance(Point& other);
+    
+    double sq_distance(const Point& other);
+    double distance(const Point& other);
     Angle angle(Point& other);
 
     double xRotation(Angle& angle);

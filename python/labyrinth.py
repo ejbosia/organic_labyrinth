@@ -5,6 +5,17 @@ Contains functions for creating organic labyrinths and mazes, as presented in "O
 @author ejbosia
 '''
 
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("distance", help="distance between lines", type = float)
+parser.add_argument("-a","--pushpull", help="push-pull multiplier", type = float)
+parser.add_argument("-b", "--brownian", help="brownian mulitplier", type = float)
+parser.add_argument("-f", "--fairing", help="enable output", type= float)
+parser.add_argument("-m", "--metrics", help="enable metrics", action='store_true')
+
+
+
 from shapely.geometry import Point, LinearRing, LineString
 
 from math import sqrt, cos, sin, pi, atan2
@@ -102,6 +113,7 @@ def pushpull_force(i0,i1,i2, points, boundaries, config, d):
 
     dx = 0
     dy = 0
+    counter = 0
 
     # determine the valid points by comparing each linestring
     for i in range(len(points)-1):
@@ -126,9 +138,8 @@ def pushpull_force(i0,i1,i2, points, boundaries, config, d):
                                     
             dx += E * (p1[0]-p2[0])/dis
             dy += E * (p1[1]-p2[1])/dis
+            counter += 1
     
-
-
     # check the boundaries
     # determine the valid points by comparing each linestring
     for i in range(len(boundaries)):
@@ -149,7 +160,13 @@ def pushpull_force(i0,i1,i2, points, boundaries, config, d):
                                     
             dx += E * (p1[0]-p2[0])/dis
             dy += E * (p1[1]-p2[1])/dis
+            counter += 1
 
+    if counter == 0:
+        return (0,0,0)
+
+    dx /= counter
+    dy /= counter
 
     # clamp the force to D
     d = sqrt(dx**2+dy**2)
@@ -157,7 +174,7 @@ def pushpull_force(i0,i1,i2, points, boundaries, config, d):
         dx = dx/d * config["CLAMP"]
         dy = dy/d * config["CLAMP"]
 
-    return (dx, dy)
+    return (dx, dy, counter)
 
 
 '''
@@ -175,11 +192,13 @@ def update(points, boundary, config, d):
     
     length = len(points)
 
-    force = np.zeros(len(points))
-
     # calculate the force vectors for every point and update the point
     for i in range(len(points)):
-        
+
+        # skip frozen points
+        if not points[i][2]:
+            continue
+
         i0,i1,i2 = neighbor_indices(i, length)
 
         if config["B"] > 0:
@@ -190,15 +209,16 @@ def update(points, boundary, config, d):
             a = pushpull_force(i0,i1,i2, points, boundary, config, d)
             
             
-        x = config["A"]*a[0]
-        y = config["A"]*a[1]
+        x = config["A"]*a[0] + config["F"]*f[0] + config["B"]*b[0]
+        y = config["A"]*a[1] + config["F"]*f[1] + config["B"]*b[1]
 
-        points[i][0] += config["F"]*f[0] + config["B"]*b[0] + x
-        points[i][1] += config["F"]*f[1] + config["B"]*b[1] + y
+        points[i][0] +=  x
+        points[i][1] +=  y
 
-        force[i] = sqrt(x**2+y**2)
+        if a[2] > config["FROZEN"]:
+            points[i][2] = 0
+        # points[i][2] = a[2]
 
-    return force
 
 @jit(nopython=True)
 def _bisect(p0, p1):
@@ -206,7 +226,7 @@ def _bisect(p0, p1):
     x = (p1[0]-p0[0])/2+p0[0]
     y = (p1[1]-p0[1])/2+p0[1]
 
-    return (x,y)
+    return (x,y,1)
 
 ''' 
 Run a resampling of the points:
@@ -231,6 +251,9 @@ def resample(points, config, d):
         
         p0 = points[i-1]
         p1 = points[i]
+
+        if not p0[2] and not p1[2]:
+            continue
         
         dis = (p0[0] - p1[0])**2 + (p0[1] - p1[1])**2
 
@@ -258,7 +281,7 @@ def main():
     
     D = 20
 
-    image = cv2.imread("images/penguin.png", 0)
+    image = cv2.imread("../images/rabbit.png", 0)
 
     print(not image is None)
     image = image[:][::-1]
@@ -271,10 +294,10 @@ def main():
 
     bls = b.exterior
     #ls = b.interiors[0]
-    ls = Point((250,300)).buffer(60).exterior
+    ls = b.centroid.buffer(2*D).exterior
 
     points = sample(ls, D)
-    points = np.array([(p.x,p.y) for p in points])
+    points = np.array([(p.x,p.y,1) for p in points])
 
     boundary = sample(bls,D)
     boundary = np.array([(p.x,p.y) for p in boundary])
@@ -286,14 +309,15 @@ def main():
     )
     
     
-    config["A"] = 0.006
+    config["A"] = 0.008
     config["B"] = 0.05
     config["F"] = 0.1
-    config["k0"] = 1.0 
+    config["k0"] = 1.0
     config["k1"] = 5.0
     config["kmin"] = 0.2
-    config["kmax"] = 0.6
+    config["kmax"] = 0.5
     config["D"] = float(D)
+    config["FROZEN"] = 250
 
     config["R0"] = config["k0"] * config["D"]
     config["R1"] = config["k1"] * config["D"]
@@ -341,22 +365,31 @@ def main():
     
     maze = Maze(points, boundary, config, line, 1)
 
-    num = 300
+    num = 400
+    pyplot.plot(maze.points[:,0], maze.points[:,1])
+
 
     for i in range(num):
-        pyplot.clf()
-        pyplot.title(str(i) + " " + str(config["B"]))
+        pyplot.title(str(i) + " " + str(config["B"]) + " " + str(np.max(maze.points[:,2])))
         maze.maze_animation(i)
-        pyplot.plot(maze.boundary[:,0], maze.boundary[:,1])
-        pyplot.scatter(maze.points[:,0], maze.points[:,1], c=maze.forces, s=2, vmin=0, vmax=D)
+        # pyplot.plot(maze.boundary[:,0], maze.boundary[:,1])
         pyplot.pause(0.05)
-        # if config["B"] > 0:
-        #     config["B"] -= 0.001
+        pyplot.clf()
+
+        pyplot.plot(maze.points[:,0], maze.points[:,1])
+        # pyplot.scatter(maze.points[:,0], maze.points[:,1], c=maze.points[:,2], s=2, vmin=0, vmax=1)
+
+        config["FROZEN"] -= 0.25
     
+    pyplot.show()
+    #     if config["B"] > 0:
+    #         config["B"] -= 0.001
+    #     else:
+    #         config["B"] = 0
     # anim = FuncAnimation(fig, maze.maze_animation, frames=num, interval=20, blit=True, save_count=num)
 
     # writervideo = PillowWriter(fps=10)
-    # anim.save('wolf.gif', writer=writervideo)
+    # anim.save('penguin.gif', writer=writervideo)
     # pyplot.close()
     
 

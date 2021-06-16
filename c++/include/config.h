@@ -18,6 +18,7 @@ struct Config{
 
     double dmax, dmin;
     double R0, R1;
+    double R02, R12;    // squared values of R0 and R1
     double D;
 
     double MAX;

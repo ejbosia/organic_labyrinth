@@ -73,8 +73,11 @@ void proximity(Point* point, const Config &config){
 
     Point close;
 
+    int counter = 0;
+
     // loop until the point before the start point is found
     while(current->next != point){
+
 
         // find the closet point on the line
         close = closest(current, current->next, point);
@@ -83,22 +86,23 @@ void proximity(Point* point, const Config &config){
         if((fabs(close.x - point->x) < config.R1) && (fabs(close.y - point->y) < config.R1)){
 
             // distance from closest point on line to point
-            dis = close.distance(*point);
+            dis = close.sq_distance(*point);
 
-            if(dis < config.R1){
+            if(dis < config.R12){
                 
-                force = pow((config.R0 / dis),12) - pow((config.R0 / dis),6);
-
-                if(force > config.MAX){
-                    force = config.MAX;
-                }
+                force = pow((config.R02 / dis),6) - pow((config.R02 / dis),3);
 
                 point->dx = point->dx + config.A * force * (point->x - close.x) / dis;
                 point->dy = point->dy + config.A * force * (point->y - close.y) / dis;
+                counter++;
             }
         }
 
         current = current->next;
+    }
+
+    if(counter > 300){
+        point->available = false;
     }
 }
 
@@ -125,33 +129,47 @@ void update(Point* start, const Config &config){
 
         current = current->next;
 
-        proximity(current, config);
+        if(current->available){
+            proximity(current, config);
 
-        brownian(current, config, generator, normal, distribution);
+            mag = (current->dx * current->dx + current->dy * current->dy);
+            if(mag > config.MAX * config.MAX){
+                
+                mag = sqrt(mag);
+                
+                current->dx = current->dx / mag * config.MAX;
+                current->dy = current->dy / mag * config.MAX;
+            }
 
-        smoothing(previous, current, current->next, config);
-    
+            brownian(current, config, generator, normal, distribution);
+
+            smoothing(previous, current, current->next, config);
+        }
     }while(current != start);
 
 
 
     int counter = 0;
-
+    int alive = 0;
     // update the points from the forces
     do{
-        current->x = current->x + current->dx;
-        current->y = current->y + current->dy;
 
-        current->dx = 0;
-        current->dy = 0;
+        if(current->available){
+            current->x = current->x + current->dx;
+            current->y = current->y + current->dy;
 
+            current->dx = 0;
+            current->dy = 0;
+
+            alive++;
+        }
         current = current->next;
 
         counter++;
     
     }while(current != start);
 
-    std::cout << "NODES: " << counter;
+    std::cout << "NODES: " << counter << " AVAILABLE: " << alive << std::endl;
 
 }
 
@@ -171,27 +189,31 @@ Point* resample(Point* start, const Config &config){
     do{
         previous = current;
         current = current->next;
-        distance = current->distance(*(current->next));
-        
-        if(distance > config.dmax){
+
+        if(current->available && current->next->available){
+
+            distance = current->distance(*(current->next));
+            
+            if(distance > config.dmax){
 
 
-            x = 0.5*(current->next->x - current->x)+current->x;
-            y = 0.5*(current->next->y - current->y)+current->y;
+                x = 0.5*(current->next->x - current->x)+current->x;
+                y = 0.5*(current->next->y - current->y)+current->y;
 
-            current->next = new Point(x, y, current->next);
-        }
-
-        if(distance < config.dmin){
-
-            previous->next = current->next;
-
-            if(current == start){
-                                
-                return previous;
+                current->next = new Point(x, y, current->next);
             }
 
-            current = previous;
+            if(distance < config.dmin){
+
+                previous->next = current->next;
+
+                if(current == start){
+                                    
+                    return previous;
+                }
+
+                current = previous;
+            }
         }
 
     }while(current != start);
