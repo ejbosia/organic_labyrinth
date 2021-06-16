@@ -258,9 +258,10 @@ def main():
     
     D = 20
 
-    image = cv2.imread("images/penguin.png", 0)
+    image = cv2.imread("../images/squirtle.png", 0)
 
-    print(not image is None)
+    assert not image is None
+
     image = image[:][::-1]
 
     temp = convert(image)[0].exterior
@@ -341,15 +342,20 @@ def main():
     num = 300
 
     for i in range(num):
-        pyplot.clf()
         pyplot.title(str(i) + " " + str(config["B"]))
         maze.maze_animation(i)
         pyplot.plot(maze.boundary[:,0], maze.boundary[:,1])
         pyplot.scatter(maze.points[:,0], maze.points[:,1], c=maze.forces, s=2, vmin=0, vmax=D)
         pyplot.pause(0.05)
+        pyplot.clf()
+
         # if config["B"] > 0:
         #     config["B"] -= 0.001
-    
+    pyplot.title("FINAL RESULT")
+    maze.maze_animation(i)
+    pyplot.plot(maze.boundary[:,0], maze.boundary[:,1])
+    pyplot.scatter(maze.points[:,0], maze.points[:,1], c=maze.forces, s=2, vmin=0, vmax=D)
+    pyplot.show()
     # anim = FuncAnimation(fig, maze.maze_animation, frames=num, interval=20, blit=True, save_count=num)
 
     # writervideo = PillowWriter(fps=10)
