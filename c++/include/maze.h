@@ -15,6 +15,9 @@
 
 void brownian(Point* point, const Config &config);
 void smoothing(Point* p0, Point* p1, Point* p2, const Config &config);
+
+
+Point closest(Point* A, Point* B, Point* C);
 void proximity(Point* point, const Config &config);
 
 void pushpull(Point* target, Point* list);

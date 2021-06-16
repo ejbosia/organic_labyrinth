@@ -15,12 +15,14 @@ Config::Config(double B, double F,double A, double k0, double k1, double kmin, d
 
     this->D = D;
 
-    this->MAX = MAX;
+    this->MAX = MAX * A;
 
     // relative values
     this->R0 = k0 * D;
     this->R1 = k1 * D;
 
+    this->R02 = R0 * R0;
+    this->R12 = R1 * R1;
 
     this->dmin = kmin * D;
     this->dmax = kmax * D;

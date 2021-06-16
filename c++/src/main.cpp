@@ -10,20 +10,21 @@
 #include "maze.h"
 
 #include <stdio.h>
-// #include <opencv2/core.hpp>
-// #include <opencv2/imgcodecs.hpp>
-// #include <opencv2/highgui.hpp>
-// #include <opencv2/opencv.hpp>
 
+#define BROWNIAN 0.05
+#define SMOOTHING 0.15
+#define PUSHPULL 0.004
+#define K0 1.0
+#define K1 5.0
+#define KMIN 0.2
+#define KMAX 0.6
+#define D 1.0
+#define MAX 20.0
 
-#define X_MAX 100.0
-#define Y_MAX 150.0
+#define ITERATIONS 5000
 
-#define X_OFFSET 20.0
-#define Y_OFFSET 20.0
-
-#define LINETHICKNESS 0.5
-#define ANGLE (M_PI/6)
+#define SAVE true
+#define SAVE_ITERATION 10
 
 int main(int argc, char** argv){
 
@@ -31,10 +32,10 @@ int main(int argc, char** argv){
 
     // auto start = chrono::high_resolution_clock::now();
 
-    // create a starting linked list of points
-
     Point* start = new Point(0.0,0.0);
     Point* current = start;
+
+    std::vector<Point> boundary;
 
     int xDir[4] = {1,0,-1,0};
     int yDir[4] = {0,1,0,-1};
@@ -58,32 +59,43 @@ int main(int argc, char** argv){
     current->next = start->next;
     start = start->next;
     // test the loop
-
-    Config config = Config(0.05, 0.1, 0.006, 1.0, 5.0, 0.2, 0.6, 1.0, 20.0*1.0);
-
-    for(int i = 0; i < 100; i++){
-
-        std::cout << "resample";
-        start = resample(start, config);
-        std::cout << " update";
-        update(start, config);
-        std::cout << i << std::endl;
-    }
-
-
-    std::ofstream myfile;
-    myfile.open ("example.txt");
     
 
-    current = start;
-    myfile << "x = [" << std::endl;
-    do{
-        myfile << *current << "," << std::endl;
-        current = current->next;
-    }while(current != start);
-    myfile << "]" << std::endl;
+    // brownian, smoothing, push pull
+    Config config = Config(
+        BROWNIAN, 
+        SMOOTHING,
+        PUSHPULL, 
+        K0,
+        K1,
+        KMIN,
+        KMAX,
+        D, 
+        MAX
+    );
 
-    myfile.close();
+    std::ofstream myfile;
+
+
+
+    for(int i = 0; i < ITERATIONS; i++){
+
+        start = resample(start, config);
+        update(start, config);
+        std::cout << " ITERATIONS: " <<  i << std::endl;
+
+        if(SAVE && (i % SAVE_ITERATION == 0)){
+            myfile.open ("results/" + std::to_string(i) + ".csv");
+
+            current = start;
+            do{
+                myfile << current->x << "," << current->y << std::endl;
+                current = current->next;
+            }while(current != start);
+
+            myfile.close();  
+        }
+    }
     
     return 0;
 }

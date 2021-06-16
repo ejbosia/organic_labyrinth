@@ -6,7 +6,7 @@ Implementation of Organic Maxes and Labyrinths paper: http://www.dgp.toronto.edu
  - [x] Basic algorithm
  - [x] Add boundary
  - [ ] CLI parameters
- - [ ] Freezing optimization ~ freeze points that are not moving
+ - [x] Freezing optimization ~ freeze points that are not moving
  - [ ] Variable scaling function
  - [ ] User interface
  - [ ] User drawn boundaries
