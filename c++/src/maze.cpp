@@ -9,9 +9,19 @@ Maze::Maze(Point* start){
 Maze::Maze(const Config config, Point& start){
     this->config = config;
     this->start = start;
-    std::default_random_engine generator;
-    std::normal_distribution<double> normal;
-    std::uniform_real_distribution<double> distribution;
+    this->boundary = {};
+    
+    this->normal(0,1.0);
+    this->distribution(0.0,M_PI*2.0);
+}
+
+Maze::Maze(const Config config, Point& start, vector<Point> boundary){
+    this->config = config;
+    this->start = start;
+    this->boundary = boundary;
+    
+    this->normal(0,1.0);
+    this->distribution(0.0,M_PI*2.0);
 }
 
 
@@ -36,9 +46,8 @@ void Maze::smoothing(Point* p0, Point* p1, Point* p2){
     double d0 = p0->distance(*p1);
     double d2 = p2->distance(*p1);
 
-    p1->dx += config.F * ((p0->x*d2 + p2->x*d0)/(d0+d2) - p1->x);
-    p1->dy += config.F * ((p0->y*d2 + p2->y*d0)/(d0+d2) - p1->y);
-
+    p1->dx += this->config.F * ((p0->x*d2 + p2->x*d0)/(d0+d2) - p1->x);
+    p1->dy += this->config.F * ((p0->y*d2 + p2->y*d0)/(d0+d2) - p1->y);
 }
 
 
@@ -64,17 +73,17 @@ void Maze::proximity(Point* point){
         close = closest(current, current->next, point);
         
         // only process if the distance "could" be within the range
-        if((fabs(close.x - point->x) < config.R1) && (fabs(close.y - point->y) < config.R1)){
+        if((fabs(close.x - point->x) < this->config.R1) && (fabs(close.y - point->y) < this->config.R1)){
 
             // distance from closest point on line to point
             dis = close.sq_distance(*point);
 
-            if(dis < config.R12){
+            if(dis < this->config.R12){
                 
-                force = pow((config.R02 / dis),6) - pow((config.R02 / dis),3);
+                force = pow((this->config.R02 / dis),6) - pow((this->config.R02 / dis),3);
 
-                point->dx = point->dx + config.A * force * (point->x - close.x) / dis;
-                point->dy = point->dy + config.A * force * (point->y - close.y) / dis;
+                point->dx = point->dx + this->config.A * force * (point->x - close.x) / dis;
+                point->dy = point->dy + this->config.A * force * (point->y - close.y) / dis;
                 counter++;
             }
         }
@@ -82,6 +91,30 @@ void Maze::proximity(Point* point){
         current = current->next;
     }
 
+
+    for(int i = 0; i < boundary.size(); i++){
+        close = closest(&boundary[i], &boundary[(i+1)%boundary.size()], point);
+        
+        // only process if the distance "could" be within the range
+        if((fabs(close.x - point->x) < this->config.R1) && (fabs(close.y - point->y) < this->config.R1)){
+
+            // distance from closest point on line to point
+            dis = close.sq_distance(*point);
+
+            if(dis < this->config.R12){
+                
+                force = pow((this->config.R02 / dis),6) - pow((this->config.R02 / dis),3);
+
+                point->dx = point->dx + this->config.A * force * (point->x - close.x) / dis;
+                point->dy = point->dy + this->config.A * force * (point->y - close.y) / dis;
+                counter++;
+            }
+        }
+
+        current = current->next;
+    }
+
+    // if the counter is above a value, "freeze" the point
     if(counter > 300){
         point->available = false;
     }
@@ -99,10 +132,6 @@ void Maze::update(Point* start, const Config &config){
     double distance;
     double mag;
 
-    std::default_random_engine generator;
-    std::normal_distribution<double> normal(0,1.0);
-    std::uniform_real_distribution<double> distribution(0.0,M_PI*2.0);
-
     // apply browian and smoothing force
     do{
 
@@ -111,7 +140,7 @@ void Maze::update(Point* start, const Config &config){
         current = current->next;
 
         if(current->available){
-            proximity(current, config);
+            proximity(current);
 
             mag = (current->dx * current->dx + current->dy * current->dy);
             if(mag > config.MAX * config.MAX){
@@ -122,9 +151,9 @@ void Maze::update(Point* start, const Config &config){
                 current->dy = current->dy / mag * config.MAX;
             }
 
-            brownian(current, config, generator, normal, distribution);
+            brownian(current);
 
-            smoothing(previous, current, current->next, config);
+            smoothing(previous, current, current->next);
         }
     }while(current != start);
 
@@ -173,7 +202,7 @@ Point* resample(Point* start, const Config &config){
 
             distance = current->distance(*(current->next));
             
-            if(distance > config.dmax){
+            if(distance > this->config.dmax){
 
 
                 x = 0.5*(current->next->x - current->x)+current->x;
@@ -182,9 +211,11 @@ Point* resample(Point* start, const Config &config){
                 current->next = new Point(x, y, current->next);
             }
 
-            if(distance < config.dmin){
-
+            if(distance < this->config.dmin){
+                
+                Point* temp = previous->next;
                 previous->next = current->next;
+                delete temp;
 
                 if(current == start){
                                     

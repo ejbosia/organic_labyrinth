@@ -17,6 +17,9 @@ class Maze{
     private:
         Config config;
         Point* start;
+        std::default_random_engine generator;
+        std::normal_distribution<double> normal;
+        std::uniform_real_distribution<double> distribution;
 
     public:
         Maze(Point* start);
