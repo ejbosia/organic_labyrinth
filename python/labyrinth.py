@@ -281,9 +281,10 @@ def main():
     
     D = 20
 
-    image = cv2.imread("../images/rabbit.png", 0)
+    image = cv2.imread("../images/squirtle.png", 0)
 
-    print(not image is None)
+    assert not image is None
+
     image = image[:][::-1]
 
     temp = convert(image)[0].exterior
