@@ -78,7 +78,6 @@ void proximity(Point* point, const Config &config){
     // loop until the point before the start point is found
     while(current->next != point){
 
-
         // find the closet point on the line
         close = closest(current, current->next, point);
         
@@ -182,9 +181,7 @@ Point* resample(Point* start, const Config &config){
     Point* current = start;
     Point* previous = start;
 
-    double distance;
-
-    double x, y;
+    double distance, x, y;
 
     do{
         previous = current;
