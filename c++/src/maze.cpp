@@ -1,26 +1,38 @@
 #include "maze.h"
 
+
+Maze::Maze(Point* start){
+    Maze(Config(), start);
+}
+
+
+Maze::Maze(const Config config, Point& start){
+    this->config = config;
+    this->start = start;
+    std::default_random_engine generator;
+    std::normal_distribution<double> normal;
+    std::uniform_real_distribution<double> distribution;
+}
+
+
 /*
 Apply brownian force to dx,dy 
 */
-void brownian(Point* point, const Config &config,std::default_random_engine generator, std::normal_distribution<double> normal,
-    std::uniform_real_distribution<double> distribution){
-
+void Maze::brownian(Point* point){
 
     double n = normal(generator);       // distance magnitude
     double a = distribution(generator); // angle
 
-    point->dx += config.B * n * cos(a);
-    point->dy += config.B * n * sin(a);
+    point->dx += this->config.B * n * cos(a);
+    point->dy += this->config.B * n * sin(a);
 
 }
 
 /*
 Apply smoothing force to dx,dy 
 */
-void smoothing(Point* p0, Point* p1, Point* p2, const Config &config){
+void Maze::smoothing(Point* p0, Point* p1, Point* p2){
     
-
     double d0 = p0->distance(*p1);
     double d2 = p2->distance(*p1);
 
@@ -29,41 +41,11 @@ void smoothing(Point* p0, Point* p1, Point* p2, const Config &config){
 
 }
 
-/*
-Closest point on line AB to point C
-*/
-Point closest(Point* A, Point* B, Point* C){
-
-    
-    double x1 = B->x - A->x;
-    double y1 = B->y - A->y;
-    
-    double x2 = C->x - A->x;
-    double y2 = C->y - A->y;
-
-    double dot = x1*x2 + y1*y2;
-
-    double length = x1*x1 + y1*y1;
-
-    if(dot < 0){
-        return *A;
-    }
-    
-    if(dot > (x1*x1+y1*y1)){
-        return *B;
-    }
-
-    return Point(
-        A->x + dot * x1 / length,
-        A->y + dot * y1 / length
-    );
-}
-
 
 /*
 Apply proximity force to dx,dy --> this looks at every point
 */
-void proximity(Point* point, const Config &config){
+void Maze::proximity(Point* point){
     
     // skip the first neighbor point
     Point* current = point->next;
@@ -109,7 +91,7 @@ void proximity(Point* point, const Config &config){
 /*
 Apply the maze forces to each point
 */
-void update(Point* start, const Config &config){
+void Maze::update(Point* start, const Config &config){
 
     Point* current = start;
     Point* previous = start;
@@ -216,4 +198,34 @@ Point* resample(Point* start, const Config &config){
     }while(current != start);
 
     return start;
+}
+
+
+/*
+Closest point on line AB to point C
+*/
+Point closest(Point* A, Point* B, Point* C){
+
+    double x1 = B->x - A->x;
+    double y1 = B->y - A->y;
+    
+    double x2 = C->x - A->x;
+    double y2 = C->y - A->y;
+
+    double dot = x1*x2 + y1*y2;
+
+    double length = x1*x1 + y1*y1;
+
+    if(dot < 0){
+        return *A;
+    }
+    
+    if(dot > (x1*x1+y1*y1)){
+        return *B;
+    }
+
+    return Point(
+        A->x + dot * x1 / length,
+        A->y + dot * y1 / length
+    );
 }
