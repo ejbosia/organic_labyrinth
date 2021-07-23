@@ -7,19 +7,9 @@ Point::Point(){
 Point::Point(double x, double y){
     this->x = x;
     this->y = y;
-    this->next = NULL;
 
     available = true;
 }
-
-Point::Point(double x, double y, Point* next){
-    this->x = x;
-    this->y = y;
-    this->next = next;
-
-    available = true;
-}
-
 
 double Point::sq_distance(const Point &other){
     double dx = x - other.x;
@@ -33,7 +23,6 @@ double Point::sq_distance(const Point &other){
 Return the distance to another point
 */
 double Point::distance(const Point &other){
-
     return sqrt(sq_distance(other));
 }
 
@@ -80,7 +69,9 @@ void Point::rotate(Angle& angle){
     x = x_temp;
 }
 
-
+/*
+Rotate the point about another point
+*/
 void Point::rotate(Point& point, Angle& angle){
 
     // translate this point so the input point is (0,0)
@@ -91,7 +82,6 @@ void Point::rotate(Point& point, Angle& angle){
     // translate this point back so the input point is itself
     x += point.x;
     y += point.y;
-
 }
 
 /*
@@ -112,8 +102,22 @@ void Point::translate(double distance, Angle& angle){
     translate(distance * c, distance * s);
 }
 
+/*
+Translate the point using the stored dx, dy values
+*/
+void Point::update(){
+    
+    x += dx;
+    y += dy;
+    
+    dx = dy = 0;
+}
 
+/*
 
+OPERATOR OVERLOADS
+
+*/
 bool Point::operator==(const Point &p){
 
     bool x_equiv = fabs(x-p.x) < 2*std::numeric_limits<double>::epsilon();
@@ -122,12 +126,62 @@ bool Point::operator==(const Point &p){
     return x_equiv && y_equiv;
 }
 
-Point Point::operator-(const Point &p){
+Point Point::operator+(const Point &p){
+    return Point(x+p.x, y+p.y);
+}
 
-    Point temp(x-p.x, y-p.y);
-    return temp;
+Point Point::operator-(const Point &p){
+    return Point(x-p.x, y-p.y);
 }
 
 std::ostream& operator<<(std::ostream &strm, const Point &p){
     return strm << "(" << round(p.x*1000.0)/1000.0 << "," <<  round(p.y*1000.0)/1000.0  << ")";
+}
+
+/*
+
+Non-class point functions
+
+*/
+
+/*
+Return the midpoint of two points
+*/
+Point bisect(const Point& A, const Point& B){
+
+    return Point(
+                    0.5*(B.x - A.x)+A.x;
+                    0.5*(B.y - A.y)+A.y;
+                );
+}
+
+
+
+/*
+Closest point on finite line "AB" to point "C"
+*/
+Point closest(const Point& A, const Point& B, const Point& C){
+
+    double x1 = B.x - A.x;
+    double y1 = B.y - A.y;
+    
+    double x2 = C.x - A.x;
+    double y2 = C.y - A.y;
+
+    double dot = x1*x2 + y1*y2;
+
+    double length = x1*x1 + y1*y1;
+->
+    if(dot < 0){
+        return A;
+    }
+    
+    if(dot > (x1*x1+y1*y1)){
+        return B;
+    }
+
+    return Point(
+        A.x + dot * x1 / length,
+        A.y + dot * y1 / length
+    );
 }

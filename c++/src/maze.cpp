@@ -118,9 +118,10 @@ void Maze::proximity(int skip = 1){
 
     for(int i = 0; i < points.size(); i++){
 
+        // reset the counter
         counter = 0;
 
-        // loop through non neighbor points
+        // process other points in maze
         for(int j = 0; j < points.size(); j++){
             
             // skip adjacent indices
@@ -141,68 +142,6 @@ void Maze::proximity(int skip = 1){
             points[i].available = false;
         }
     }
-
-
-
-    // skip the first neighbor point
-    Point* current = point.next;
-
-
-
-    int counter = 0;
-
-    // loop until the point before the start point is found
-    while(current->next != point){
-
-        // find the closet point on the line
-        close = closest(current, current->next, point);
-        
-        // only process if the distance "could" be within the range
-        if((fabs(close.x - point->x) < this->config.R1) && (fabs(close.y - point->y) < this->config.R1)){
-
-            // distance from closest point on line to point
-            dis = close.sq_distance(*point);
-
-            if(dis < this->config.R12){
-                
-                force = pow((this->config.R02 / dis),6) - pow((this->config.R02 / dis),3);
-
-                point->dx = point->dx + this->config.A * force * (point->x - close.x) / dis;
-                point->dy = point->dy + this->config.A * force * (point->y - close.y) / dis;
-                counter++;
-            }
-        }
-
-        current = current->next;
-    }
-
-
-    for(int i = 0; i < boundary.size(); i++){
-        close = closest(&boundary[i], &boundary[(i+1)%boundary.size()], point);
-        
-        // only process if the distance "could" be within the range
-        if((fabs(close.x - point->x) < this->config.R1) && (fabs(close.y - point->y) < this->config.R1)){
-
-            // distance from closest point on line to point
-            dis = close.sq_distance(*point);
-
-            if(dis < this->config.R12){
-                
-                force = pow((this->config.R02 / dis),6) - pow((this->config.R02 / dis),3);
-
-                point->dx = point->dx + this->config.A * force * (point->x - close.x) / dis;
-                point->dy = point->dy + this->config.A * force * (point->y - close.y) / dis;
-                counter++;
-            }
-        }
-
-        current = current->next;
-    }
-
-    // if the counter is above a value, "freeze" the point
-    if(counter > 300){
-        point->available = false;
-    }
 }
 
 
@@ -215,131 +154,45 @@ void Maze::update(){
     smoothing();
     proximity();
 
-    // apply browian and smoothing force
-    // do{
-
-    //     previous = current;
-
-    //     current = current->next;
-
-    //     if(current->available){
-    //         proximity(current);
-
-    //         mag = (current->dx * current->dx + current->dy * current->dy);
-    //         if(mag > config.MAX * config.MAX){
-                
-    //             mag = sqrt(mag);
-                
-    //             current->dx = current->dx / mag * config.MAX;
-    //             current->dy = current->dy / mag * config.MAX;
-    //         }
-
-    //         brownian(current);
-
-    //         smoothing(previous, current, current->next);
-    //     }
-    // }while(current != start);
-
-
-
-    int counter = 0;
     int alive = 0;
+    
     // update the points from the forces
-    do{
-
-        if(current->available){
-            current->x = current->x + current->dx;
-            current->y = current->y + current->dy;
-
-            current->dx = 0;
-            current->dy = 0;
-
+    for(int i = 0; i < points.size(); i++){        
+        if(points[i].available){
+            points[i].update();
             alive++;
         }
-        current = current->next;
+    }
 
-        counter++;
-    
-    }while(current != start);
-
-    std::cout << "NODES: " << counter << " AVAILABLE: " << alive << std::endl;
-
+    std::cout << "NODES: " << points.size() << " AVAILABLE: " << alive << std::endl;
 }
 
 
 /*
 Add points to the linked list of points
 */
-Point* resample(Point* start, const Config &config){
+void Maze::resample(){
     
-    Point* current = start;
-    Point* previous = start;
-
     double distance, x, y;
 
-    do{
-        previous = current;
-        current = current->next;
+    int p = points.size()-1;
 
-        if(current->available && current->next->available){
+    for(int i = 0; i < points.size(); i++){
 
-            distance = current->distance(*(current->next));
+        if(points[i].available && points[p].available){
             
+            distance = points[i].distance(points[p]);
+            
+            // insert new point if distance is > dmax threshold
             if(distance > this->config.dmax){
-
-
-                x = 0.5*(current->next->x - current->x)+current->x;
-                y = 0.5*(current->next->y - current->y)+current->y;
-
-                current->next = new Point(x, y, current->next);
+                points.insert(points.begin()+i, bisect(points[i], points[p]));
+                i++;    // do not reevaluate this point
             }
-
-            if(distance < this->config.dmin){
-                
-                Point* temp = previous->next;
-                previous->next = current->next;
-                delete temp;
-
-                if(current == start){
-                                    
-                    return previous;
-                }
-
-                current = previous;
+            // remove point if the distance between it and the previous point is too low
+            else if(distance < this->config.dmin){
+                points.remove(points.begin()+i);
+                i--;    // reevalute this index (now a new point)
             }
         }
-
-    }while(current != start);
-
-    return start;
-}
-
-
-/*
-Closest point on line AB to point C
-*/
-Point closest(Point* A, Point* B, Point* C){
-
-    double x1 = B->x - A->x;
-    double y1 = B->y - A->y;
-    
-    double x2 = C->x - A->x;
-    double y2 = C->y - A->y;
-
-    double dot = x1*x2 + y1*y2;
-
-    double length = x1*x1 + y1*y1;
-
-    if(dot < 0){
-        return *A;
     }
-    
-    if(dot > (x1*x1+y1*y1)){
-        return *B;
-    }
-
-    return Point(
-        A->x + dot * x1 / length,
-        A->y + dot * y1 / length
-    );
 }

@@ -22,14 +22,18 @@ class Maze{
         std::normal_distribution<double> normal;
         std::uniform_real_distribution<double> distribution;
 
+        void proximityForce(Point& point, const Point& p0, const Point& p1, int& counter);
+        void brownian();
+        void smoothing();
+        void proximity(int skip=1);
+
     public:
-        Maze(Point* start);
-        Maze(const Config config, vector<Point> points);
-        void brownian(Point* point, const Config &config);
-        void smoothing(Point* p0, Point* p1, Point* p2, const Config &config);
-        void proximity(Point* point, const Config &config);
-        void update(Point* start, const Config &config);
-        void resample(Point* start, const Config &config);
+        Maze();
+        Maze(const Config& config, vector<Point> points);
+        Maze(const Config& config, vector<Point> points, vector<Point> boundary);
+
+        void update();
+        void resample();
 
 };
 
