@@ -26,7 +26,7 @@ Config::Config(){
     this->dmin = kmin * D;
     this->dmax = kmax * D;
 
-    this->freeze = 300;
+    this->freeze = INT32_MAX;
 }
 
 

@@ -11,7 +11,7 @@
 
 #include <stdio.h>
 
-#define ITERATIONS 2
+#define ITERATIONS 251
 
 #define SAVE true
 #define SAVE_ITERATION 10
@@ -37,7 +37,6 @@ int main(int argc, char** argv){
     Maze maze(config, points);
 
     for(int i = 0; i < ITERATIONS; i++){
-
         maze.resample();
         maze.update();
 

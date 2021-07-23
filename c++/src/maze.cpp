@@ -34,6 +34,10 @@ void Maze::brownian(){
 
     for(int i = 0; i < points.size(); i++){
 
+        if(!points[i].available){
+            continue;
+        }
+
         n = normal(generator);
         a = distribution(generator);
 
@@ -57,10 +61,12 @@ void Maze::smoothing(){
     // update points except last point
     for(int i = 0; i < points.size()-1; i++){
 
+        if(!points[i].available){
+            continue;
+        }
+
         p2 = points[i+1];
         d2 = points[i].distance(p2);
-
-        std::cout << d0 << " " << d2 <<  " " << p0 << " " << points[i] << " " << points[i+1] << std::endl;
 
         points[i].dx += this->config.F * ((p0.x*d2 + p2.x*d0)/(d0+d2) - points[i].x);
         points[i].dy += this->config.F * ((p0.y*d2 + p2.y*d0)/(d0+d2) - points[i].y);
@@ -73,6 +79,11 @@ void Maze::smoothing(){
 
     // update the final point
     p2 = points.front();
+
+    if(!points.back().available){
+        return;
+    }
+
     d2 = points.back().distance(p2);
 
     points.back().dx += this->config.F * ((p0.x*d2 + p2.x*d0)/(d0+d2) - points.back().x);
@@ -103,8 +114,8 @@ void Maze::proximityForce(Point& point, const Point& p0, const Point& p1, int& c
             dis = sqrt(dis);
 
             // TODO should "dis" be sqrt here?
-            point.dx += this->config.A * force * (point.dx - close.x) / dis;
-            point.dy += this->config.A * force * (point.dy - close.y) / dis;
+            point.dx += this->config.A * force * (point.x - close.x) / dis;
+            point.dy += this->config.A * force * (point.y - close.y) / dis;
             counter++;
         }
     }
@@ -120,6 +131,10 @@ void Maze::proximity(int skip){
     int counter;
 
     for(int i = 0; i < points.size(); i++){
+
+        if(!points[i].available){
+            continue;
+        }
 
         // reset the counter
         counter = 0;
@@ -139,6 +154,15 @@ void Maze::proximity(int skip){
         for(int j = 0; j < boundary.size(); j++){
             proximityForce(points[i], boundary[j], boundary[(j+1)%boundary.size()], counter);
         }
+        
+        double force = points[i].dx * points[i].dx + points[i].dy * points[i].dy;
+
+        if(force > config.MAX*config.MAX){
+            force = sqrt(force);
+
+            points[i].dx = points[i].dx/force * config.MAX;
+            points[i].dy = points[i].dy/force * config.MAX;
+        }
 
         // freeze the point if there are enough points close to it
         if(counter > config.freeze){
@@ -153,13 +177,9 @@ Apply the maze forces to each point
 */
 void Maze::update(){
 
-    brownian();
-    std::cout << std::to_string(points[0].dx) << " " << std::to_string(points[0].dy) << std::endl;
-    smoothing();
-    std::cout << std::to_string(points[0].dx) << " " << std::to_string(points[0].dy) << std::endl;
     proximity();
-    std::cout << std::to_string(points[0].dx) << " " << std::to_string(points[0].dy) << std::endl;
-    std::cout << std::endl;
+    brownian();
+    smoothing();
 
     int alive = 0;
     
@@ -201,6 +221,7 @@ void Maze::resample(){
                 i--;    // reevalute this index (now a new point)
             }
         }
+        p=i;
     }
 }
 
