@@ -30,36 +30,14 @@ int main(int argc, char** argv){
 
     std::cout.precision(std::numeric_limits<double>::digits10 + 2);
 
-    // auto start = chrono::high_resolution_clock::now();
+    std::vector<Point> points{
+        Point(0,0),
+        Point(0,1),
+        Point(1,1),
+        Point(1,0)
+    };
 
-    Point* start = new Point(0.0,0.0);
-    Point* current = start;
-
-    std::vector<Point> boundary;
-
-    int xDir[4] = {1,0,-1,0};
-    int yDir[4] = {0,1,0,-1};
-
-    double x, y;
-
-    for(int i = 0; i < 4; i++){
-
-
-        for(int j = 0; j < 5; j++){
-
-            current->next = new Point(x,y);
-            current = current->next;
-
-            x += xDir[i];
-            y += yDir[i];
-        }
-
-    }
-
-    current->next = start->next;
-    start = start->next;
-    // test the loop
-    
+    std::vector<Point> boundary;    
 
     // brownian, smoothing, push pull
     Config config = Config(
@@ -76,22 +54,19 @@ int main(int argc, char** argv){
 
     std::ofstream myfile;
 
-
+    Maze maze(config, points);
 
     for(int i = 0; i < ITERATIONS; i++){
 
-        start = resample(start, config);
-        update(start, config);
+        maze.resample());
+        maze.update();
+
         std::cout << " ITERATIONS: " <<  i << std::endl;
 
         if(SAVE && (i % SAVE_ITERATION == 0)){
             myfile.open ("results/" + std::to_string(i) + ".csv");
 
-            current = start;
-            do{
-                myfile << current->x << "," << current->y << std::endl;
-                current = current->next;
-            }while(current != start);
+            for(int i = 0; i < maze.)
 
             myfile.close();  
         }

@@ -4,21 +4,16 @@ Maze::Maze(Point* start){
     Maze(Config(), start);
 }
 
-
-Maze::Maze(const Config config, std::vector<Point> points){
-    this->config = config;
-    this->points = points;
-    this->boundary = {};
-    
-    this->normal(0,1.0);
-    this->distribution(0.0,M_PI*2.0);
+Maze::Maze(const Config& config, std::vector<Point> points){
+    this->Maze(config, points, boundary);
 }
 
-Maze::Maze(const Config config, std::vector<Point> points, std::vector<Point> boundary){
+Maze::Maze(const Config& config, std::vector<Point> points, std::vector<Point> boundary){
     this->config = config;
     this->points = points;
     this->boundary = boundary;
-    
+
+    this->generator();
     this->normal(0,1.0);
     this->distribution(0.0,M_PI*2.0);
 }
@@ -32,7 +27,7 @@ void Maze::brownian(){
     double n;   // distance magnitude
     double a;   // angle
 
-    for(int i = 0; i < points.size(); i++){
+    for(int i = 0; i < points.size(); i++){~
 
         n = normal(generator);
         a = distribution(generator);
@@ -47,7 +42,6 @@ Apply smoothing force to every point
 */
 void Maze::smoothing(){
     
-
     Point p0, p2;
     double d0, d2;
 
@@ -196,3 +190,19 @@ void Maze::resample(){
         }
     }
 }
+
+/*
+Output all of the points in a string
+*/
+std::string Maze::output(){
+
+    std::string output = "[";
+
+    for(int i = 0; i < points.size(); i++){
+        output += to_string(points[i].x) + 
+    }
+
+    return output + "]";
+
+}
+

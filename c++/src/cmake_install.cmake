@@ -1,4 +1,4 @@
-# Install script for directory: /home/ejbosia/Programs/labyrinths/c++/src
+# Install script for directory: /home/evanjbosia/Programs/organic_labyrinth/c++/src
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

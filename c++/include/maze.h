@@ -22,27 +22,20 @@ class Maze{
         std::normal_distribution<double> normal;
         std::uniform_real_distribution<double> distribution;
 
-        void proximityForce(Point& point, const Point& p0, const Point& p1, int& counter);
         void brownian();
         void smoothing();
         void proximity(int skip=1);
+        void proximityForce(Point& point, const Point& p0, const Point& p1, int& counter);
 
     public:
         Maze();
-        Maze(const Config& config, vector<Point> points);
-        Maze(const Config& config, vector<Point> points, vector<Point> boundary);
+        Maze(const Config& config, std::vector<Point> points);
+        Maze(const Config& config, std::vector<Point> points, std::vector<Point> boundary);
 
         void update();
         void resample();
 
+        string output();
 };
-
-
-
-Point closest(Point* A, Point* B, Point* C);
-
-void pushpull(Point* target, Point* list);
-
-
 
 #endif
