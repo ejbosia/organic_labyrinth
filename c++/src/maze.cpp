@@ -1,23 +1,22 @@
 #include "maze.h"
 
-
 Maze::Maze(Point* start){
     Maze(Config(), start);
 }
 
 
-Maze::Maze(const Config config, Point& start){
+Maze::Maze(const Config config, std::vector<Point> points){
     this->config = config;
-    this->start = start;
+    this->points = points;
     this->boundary = {};
     
     this->normal(0,1.0);
     this->distribution(0.0,M_PI*2.0);
 }
 
-Maze::Maze(const Config config, Point& start, vector<Point> boundary){
+Maze::Maze(const Config config, std::vector<Point> points, std::vector<Point> boundary){
     this->config = config;
-    this->start = start;
+    this->points = points;
     this->boundary = boundary;
     
     this->normal(0,1.0);
@@ -26,38 +25,67 @@ Maze::Maze(const Config config, Point& start, vector<Point> boundary){
 
 
 /*
-Apply brownian force to dx,dy 
+Apply brownian force to every point in vector
 */
-void Maze::brownian(Point* point){
+void Maze::brownian(){
 
-    double n = normal(generator);       // distance magnitude
-    double a = distribution(generator); // angle
+    double n;   // distance magnitude
+    double a;   // angle
 
-    point->dx += this->config.B * n * cos(a);
-    point->dy += this->config.B * n * sin(a);
+    for(int i = 0; i < points.size(); i++){
 
+        n = normal(generator);
+        a = distribution(generator);
+
+        points[i].dx += this->config.B * n * cos(a);
+        points[i].dy += this->config.B * n * sin(a);
+    }
 }
 
 /*
-Apply smoothing force to dx,dy 
+Apply smoothing force to every point
 */
-void Maze::smoothing(Point* p0, Point* p1, Point* p2){
+void Maze::smoothing(){
     
-    double d0 = p0->distance(*p1);
-    double d2 = p2->distance(*p1);
 
-    p1->dx += this->config.F * ((p0->x*d2 + p2->x*d0)/(d0+d2) - p1->x);
-    p1->dy += this->config.F * ((p0->y*d2 + p2->y*d0)/(d0+d2) - p1->y);
+    Point p0, p2;
+    double d0, d2;
+
+    // set previous distance to back-to-front distance
+    p0 = points.back();
+    d0 = points[0].distance(p0);
+
+    // update points except last point
+    for(int i = 0; i < points.size()-1; i++){
+        p2 = points[i+1];
+        d2 = points[i].distance(p2);
+        points[i].dx += this->config.F * ((p0.x*d2 + p2.x*d0)/(d0+d2) - points[i].x);
+        points[i].dy += this->config.F * ((p0.y*d2 + p2.y*d0)/(d0+d2) - points[i].y);
+
+        // use "next" distance as the next "previous" distance
+        //   ex: distance between p0 and p1 is used for updating p0 and p1
+        p0 = points[i];
+        d0 = d2;
+    }
+
+    // update the final point
+    p2 = points.front();
+    d2 = points.back().distance(p2);
+
+    points.back().dx += this->config.F * ((p0.x*d2 + p2.x*d0)/(d0+d2) - points.back().x);
+    points.back().dy += this->config.F * ((p0.y*d2 + p2.y*d0)/(d0+d2) - points.back().y);
 }
 
 
 /*
-Apply proximity force to dx,dy --> this looks at every point
+Apply proximity force to dx,dy --> this looks at every other point!
 */
-void Maze::proximity(Point* point){
+void Maze::proximity(){
     
+    // TODO CHANGE TO VECTOR
+
     // skip the first neighbor point
-    Point* current = point->next;
+    Point* current = point.next;
 
     double dis;
     double force;
@@ -124,38 +152,36 @@ void Maze::proximity(Point* point){
 /*
 Apply the maze forces to each point
 */
-void Maze::update(Point* start, const Config &config){
+void Maze::update(){
 
-    Point* current = start;
-    Point* previous = start;
-
-    double distance;
-    double mag;
+    brownian();
+    smoothing();
+    proximity();
 
     // apply browian and smoothing force
-    do{
+    // do{
 
-        previous = current;
+    //     previous = current;
 
-        current = current->next;
+    //     current = current->next;
 
-        if(current->available){
-            proximity(current);
+    //     if(current->available){
+    //         proximity(current);
 
-            mag = (current->dx * current->dx + current->dy * current->dy);
-            if(mag > config.MAX * config.MAX){
+    //         mag = (current->dx * current->dx + current->dy * current->dy);
+    //         if(mag > config.MAX * config.MAX){
                 
-                mag = sqrt(mag);
+    //             mag = sqrt(mag);
                 
-                current->dx = current->dx / mag * config.MAX;
-                current->dy = current->dy / mag * config.MAX;
-            }
+    //             current->dx = current->dx / mag * config.MAX;
+    //             current->dy = current->dy / mag * config.MAX;
+    //         }
 
-            brownian(current);
+    //         brownian(current);
 
-            smoothing(previous, current, current->next);
-        }
-    }while(current != start);
+    //         smoothing(previous, current, current->next);
+    //     }
+    // }while(current != start);
 
 
 

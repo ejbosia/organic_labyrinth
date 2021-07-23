@@ -16,14 +16,15 @@ class Maze{
 
     private:
         Config config;
-        Point* start;
+        std::vector<Point> points;
+        std::vector<Point> boundary;
         std::default_random_engine generator;
         std::normal_distribution<double> normal;
         std::uniform_real_distribution<double> distribution;
 
     public:
         Maze(Point* start);
-        Maze(const Config config, Point* start);
+        Maze(const Config config, vector<Point> points);
         void brownian(Point* point, const Config &config);
         void smoothing(Point* p0, Point* p1, Point* p2, const Config &config);
         void proximity(Point* point, const Config &config);
