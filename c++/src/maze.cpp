@@ -78,19 +78,76 @@ void Maze::smoothing(){
 
 
 /*
-Apply proximity force to dx,dy --> this looks at every other point!
+Calculate proximity force on one point
 */
-void Maze::proximity(){
+void Maze::proximityForce(Point& point, const Point& p0, const Point& p1, int& counter){
+    // get the closest point on the line
+    Point close = closest(p0, p1, point);
+
+    // check manhatten distance
+    if((fabs(close.x - points[i].x)+fabs(close.y - points[i].y) < this->config.R1)){
+        
+        // distance from closest point on line to point w/o sqrt
+        double dis = close.sq_distance(point);
+
+        // check if the squared distance is within the valid radius
+        if(dis < this->config.R12){
+            
+            // calculate "force" using lennard jones potential
+            // - note the distance used here is squared to avoid sqrt ~ R0 is squared (R02) and the exponents of LJP are halved.
+            force = pow((this->config.R02 / dis),6) - pow((this->config.R02 / dis),3);
+
+            dis = sqrt(dis);
+
+            // TODO should "dis" be sqrt here?
+            points[i].dx += this->config.A * force * (points[i].dx - close.x) / dis;
+            points[i].dy += this->config.A * force * (points[i].dy - close.y) / dis;
+            counter++;
+        }
+    }
+}
+
+
+/*
+Apply proximity force to each point in the vector --> this looks at every other point!
+*/
+void Maze::proximity(int skip = 1){
     
-    // TODO CHANGE TO VECTOR
+    double dis, force;
+    int counter;
+
+    for(int i = 0; i < points.size(); i++){
+
+        counter = 0;
+
+        // loop through non neighbor points
+        for(int j = 0; j < points.size(); j++){
+            
+            // skip adjacent indices
+            if(abs(i-j) <= skip || abs(i-j) >= points.size()-skip){
+                continue;
+            }
+
+            proximityForce(points[i], points[j], points[(j+1)%points.size()], counter);
+        }
+
+        // process the boundaries
+        for(int j = 0; j < boundary.size(); j++){
+            proximityForce(points[i], boundary[j], boundary[(j+1)%boundary.size()], counter);
+        }
+
+        // freeze the point if there are enough points close to it
+        if(counter > config.freeze){
+            points[i].available = false;
+        }
+    }
+
+
 
     // skip the first neighbor point
     Point* current = point.next;
 
-    double dis;
-    double force;
 
-    Point close;
 
     int counter = 0;
 
