@@ -38,7 +38,6 @@ struct Point{
     void rotate(Point& point, Angle& angle);
 
     bool operator==(const Point &p);
-    Point operator-(const Point &p);
 
     friend std::ostream& operator<<(std::ostream &strm, const Point &p);
 };

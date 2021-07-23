@@ -19,8 +19,6 @@ class Maze{
         std::vector<Point> points;
         std::vector<Point> boundary;
         std::default_random_engine generator;
-        std::normal_distribution<double> normal;
-        std::uniform_real_distribution<double> distribution;
 
         void brownian();
         void smoothing();
@@ -35,7 +33,7 @@ class Maze{
         void update();
         void resample();
 
-        string output();
+        std::string output();
 };
 
 #endif

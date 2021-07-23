@@ -23,7 +23,11 @@ struct Config{
 
     double MAX;
 
-    Config(double B, double F,double A, double k0, double k1, double kmin, double kmax,double D, double MAX);
+    int freeze;
+
+    Config();
+
+    Config(double B, double F,double A, double k0, double k1, double kmin, double kmax,double D, double MAX, int freeze = INT32_MAX);
 
 };
 

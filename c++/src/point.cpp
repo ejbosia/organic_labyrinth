@@ -18,7 +18,6 @@ double Point::sq_distance(const Point &other){
     return pow(dx,2.0) + pow(dy,2.0);
 }
 
-
 /*
 Return the distance to another point
 */
@@ -126,13 +125,13 @@ bool Point::operator==(const Point &p){
     return x_equiv && y_equiv;
 }
 
-Point Point::operator+(const Point &p){
-    return Point(x+p.x, y+p.y);
-}
+// Point Point::operator+(const Point &p){
+//     return Point(x+p.x, y+p.y);
+// }
 
-Point Point::operator-(const Point &p){
-    return Point(x-p.x, y-p.y);
-}
+// Point Point::operator-(const Point &p){
+//     return Point(x-p.x, y-p.y);
+// }
 
 std::ostream& operator<<(std::ostream &strm, const Point &p){
     return strm << "(" << round(p.x*1000.0)/1000.0 << "," <<  round(p.y*1000.0)/1000.0  << ")";
@@ -150,8 +149,8 @@ Return the midpoint of two points
 Point bisect(const Point& A, const Point& B){
 
     return Point(
-                    0.5*(B.x - A.x)+A.x;
-                    0.5*(B.y - A.y)+A.y;
+                    0.5*(B.x - A.x)+A.x,
+                    0.5*(B.y - A.y)+A.y
                 );
 }
 
@@ -171,7 +170,7 @@ Point closest(const Point& A, const Point& B, const Point& C){
     double dot = x1*x2 + y1*y2;
 
     double length = x1*x1 + y1*y1;
-->
+
     if(dot < 0){
         return A;
     }

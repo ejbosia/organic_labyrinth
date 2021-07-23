@@ -1,11 +1,15 @@
 #include "maze.h"
 
-Maze::Maze(Point* start){
-    Maze(Config(), start);
+Maze::Maze(){
+    Maze(Config(), std::vector<Point>{ Point(0,0), Point(0,1), Point(1,1), Point(1,0) });
 }
 
 Maze::Maze(const Config& config, std::vector<Point> points){
-    this->Maze(config, points, boundary);
+    this->config = config;
+    this->points = points;
+    this->boundary = {};
+
+    this->generator();
 }
 
 Maze::Maze(const Config& config, std::vector<Point> points, std::vector<Point> boundary){
@@ -14,8 +18,6 @@ Maze::Maze(const Config& config, std::vector<Point> points, std::vector<Point> b
     this->boundary = boundary;
 
     this->generator();
-    this->normal(0,1.0);
-    this->distribution(0.0,M_PI*2.0);
 }
 
 
@@ -24,10 +26,13 @@ Apply brownian force to every point in vector
 */
 void Maze::brownian(){
 
+    std::normal_distribution<double> normal(0,1.0);
+    std::uniform_real_distribution<double> distribution(0.0,M_PI*2.0);
+
     double n;   // distance magnitude
     double a;   // angle
 
-    for(int i = 0; i < points.size(); i++){~
+    for(int i = 0; i < points.size(); i++){
 
         n = normal(generator);
         a = distribution(generator);
@@ -51,8 +56,12 @@ void Maze::smoothing(){
 
     // update points except last point
     for(int i = 0; i < points.size()-1; i++){
+
         p2 = points[i+1];
         d2 = points[i].distance(p2);
+
+        std::cout << d0 << " " << d2 <<  " " << p0 << " " << points[i] << " " << points[i+1] << std::endl;
+
         points[i].dx += this->config.F * ((p0.x*d2 + p2.x*d0)/(d0+d2) - points[i].x);
         points[i].dy += this->config.F * ((p0.y*d2 + p2.y*d0)/(d0+d2) - points[i].y);
 
@@ -79,7 +88,7 @@ void Maze::proximityForce(Point& point, const Point& p0, const Point& p1, int& c
     Point close = closest(p0, p1, point);
 
     // check manhatten distance
-    if((fabs(close.x - points[i].x)+fabs(close.y - points[i].y) < this->config.R1)){
+    if((fabs(close.x - point.x)+fabs(close.y - point.y) < this->config.R1)){
         
         // distance from closest point on line to point w/o sqrt
         double dis = close.sq_distance(point);
@@ -89,13 +98,13 @@ void Maze::proximityForce(Point& point, const Point& p0, const Point& p1, int& c
             
             // calculate "force" using lennard jones potential
             // - note the distance used here is squared to avoid sqrt ~ R0 is squared (R02) and the exponents of LJP are halved.
-            force = pow((this->config.R02 / dis),6) - pow((this->config.R02 / dis),3);
+            double force = pow((this->config.R02 / dis),6) - pow((this->config.R02 / dis),3);
 
             dis = sqrt(dis);
 
             // TODO should "dis" be sqrt here?
-            points[i].dx += this->config.A * force * (points[i].dx - close.x) / dis;
-            points[i].dy += this->config.A * force * (points[i].dy - close.y) / dis;
+            point.dx += this->config.A * force * (point.dx - close.x) / dis;
+            point.dy += this->config.A * force * (point.dy - close.y) / dis;
             counter++;
         }
     }
@@ -105,7 +114,7 @@ void Maze::proximityForce(Point& point, const Point& p0, const Point& p1, int& c
 /*
 Apply proximity force to each point in the vector --> this looks at every other point!
 */
-void Maze::proximity(int skip = 1){
+void Maze::proximity(int skip){
     
     double dis, force;
     int counter;
@@ -117,9 +126,9 @@ void Maze::proximity(int skip = 1){
 
         // process other points in maze
         for(int j = 0; j < points.size(); j++){
-            
+
             // skip adjacent indices
-            if(abs(i-j) <= skip || abs(i-j) >= points.size()-skip){
+            if(abs(i-j) <= skip || abs(i-(j+1)) <= skip || abs(i-j) >= points.size()-skip || abs(i-(j+1)) >= points.size()-skip){
                 continue;
             }
 
@@ -145,8 +154,12 @@ Apply the maze forces to each point
 void Maze::update(){
 
     brownian();
+    std::cout << std::to_string(points[0].dx) << " " << std::to_string(points[0].dy) << std::endl;
     smoothing();
+    std::cout << std::to_string(points[0].dx) << " " << std::to_string(points[0].dy) << std::endl;
     proximity();
+    std::cout << std::to_string(points[0].dx) << " " << std::to_string(points[0].dy) << std::endl;
+    std::cout << std::endl;
 
     int alive = 0;
     
@@ -184,7 +197,7 @@ void Maze::resample(){
             }
             // remove point if the distance between it and the previous point is too low
             else if(distance < this->config.dmin){
-                points.remove(points.begin()+i);
+                points.erase(points.begin()+i);
                 i--;    // reevalute this index (now a new point)
             }
         }
@@ -196,13 +209,13 @@ Output all of the points in a string
 */
 std::string Maze::output(){
 
-    std::string output = "[";
+    std::string output = "";
 
     for(int i = 0; i < points.size(); i++){
-        output += to_string(points[i].x) + 
+        output += std::to_string(points[i].x) + "," + std::to_string(points[i].y) + "\n";
     }
 
-    return output + "]";
+    return output;
 
 }
 
