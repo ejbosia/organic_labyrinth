@@ -1,15 +1,8 @@
 #include "point.h"
 
-Point::Point(){
-    
-}
 
-Point::Point(double x, double y){
-    this->x = x;
-    this->y = y;
-
-    available = true;
-}
+Point::Point() : x(0.), y(0.), available(true){}
+Point::Point(double x, double y) : x(x), y(y), available(true){}
 
 double Point::sq_distance(const Point &other){
     double dx = x - other.x;

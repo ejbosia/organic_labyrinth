@@ -1,9 +1,10 @@
+#include <string>
+#include <math.h>
+#include <cmath>
+#include <limits>
+#include <numbers>
+
 #include "angle.h"
-
-
-Angle::Angle(){
-    
-}
 
 
 /*
@@ -21,7 +22,7 @@ double Angle::getAngle(){
 }
 
 double Angle::degrees(){
-    return angle * 180 / M_PI;
+    return angle * 180 / std::numbers::pi;
 }
 
 
@@ -36,14 +37,14 @@ void Angle::rotateAngle(double angle){
 Set the angle, maintain 0-2PI
 */
 void Angle::setAngle(double angle){
-    this->angle = std::fmod(angle,(2*M_PI));
+    this->angle = std::fmod(angle,(2* std::numbers::pi));
 }
 
 /*
 Check if the input angle is parallel to the angle
 */
 bool Angle::parallel(double a){
-    return 0 == std::fmod(angle-a,(M_PI));
+    return 0 == std::fmod(angle-a,(std::numbers::pi));
 }
 
 double Angle::sine(){

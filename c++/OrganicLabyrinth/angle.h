@@ -2,11 +2,7 @@
 #ifndef ANGLE_H
 #define ANGLE_H
 
-#include <iostream>
-#include <string>
-#include <math.h>
-#include <cmath>
-#include <limits>
+#include <ostream>
 
 
 class Angle{

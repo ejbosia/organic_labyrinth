@@ -1,3 +1,5 @@
+#include <numbers>
+
 #include "maze.h"
 
 Maze::Maze(){
@@ -27,7 +29,7 @@ Apply brownian force to every point in vector
 void Maze::brownian(){
 
     std::normal_distribution<double> normal(0,1.0);
-    std::uniform_real_distribution<double> distribution(0.0,M_PI*2.0);
+    std::uniform_real_distribution<double> distribution(0.0,std::numbers::pi*2.0);
 
     double n;   // distance magnitude
     double a;   // angle

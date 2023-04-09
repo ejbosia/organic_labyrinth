@@ -17,7 +17,6 @@ struct Point{
 
     // store the adjustments
     double dx,dy;
-    
     Point();
     Point(double x, double y);
     
