@@ -20,10 +20,14 @@ class Maze{
         std::vector<Point> boundary;
         std::default_random_engine generator;
 
-        void _brownian();
-        void _smoothing();
-        void _proximity(int skip=1);
-        void _proximityForce(Point& point, const Point& p0, const Point& p1, int& counter);
+        std::normal_distribution<double> normal;
+        std::uniform_real_distribution<double> distribution;
+
+        void _brownian(int index);
+        void _smoothing(int index);
+        void _proximity(int index, int skip=1);
+        void _proximity_force(Point& point, const Point& p0, const Point& p1, int& counter);
+        void _calculate_force(int index);
 
     public:
         Maze(const Config& config, std::vector<Point> points);

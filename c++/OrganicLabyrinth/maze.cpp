@@ -1,95 +1,64 @@
 #include <sstream>
 #include <numbers>
+#include <future>
 
 #include "maze.h"
 
-Maze::Maze(const Config& config, std::vector<Point> points){
-    this->config = config;
-    this->points = points;
-    this->boundary = {};
-}
+Maze::Maze(const Config& config, std::vector<Point> points) :
+    config(config), 
+    points(points),
+    boundary({}),
+    normal(0, 1.0),
+    distribution(0.0, std::numbers::pi * 2.0)
+{}
 
-Maze::Maze(const Config& config, std::vector<Point> points, std::vector<Point> boundary){
-    this->config = config;
-    this->points = points;
-    this->boundary = boundary;
-}
+Maze::Maze(const Config& config, std::vector<Point> points, std::vector<Point> boundary) :
+    config(config),
+    points(points),
+    boundary(boundary),
+    normal(0, 1.0),
+    distribution(0.0, std::numbers::pi * 2.0)
+{}
 
 /*
 Apply brownian force to every point in vector
 */
-void Maze::_brownian(){
+void Maze::_brownian(int index)
+{
+    double n = normal(generator);
+    double a = distribution(generator);
 
-    std::normal_distribution<double> normal(0,1.0);
-    std::uniform_real_distribution<double> distribution(0.0,std::numbers::pi*2.0);
-
-    double n;   // distance magnitude
-    double a;   // angle
-
-    for(int i = 0; i < points.size(); i++){
-
-        if(points[i].frozen){
-            continue;
-        }
-
-        n = normal(generator);
-        a = distribution(generator);
-
-        points[i].dx += this->config.B * n * cos(a);
-        points[i].dy += this->config.B * n * sin(a);
-    }
+    points[index].dx += this->config.B * n * cos(a);
+    points[index].dy += this->config.B * n * sin(a);
 }
 
-/*
-Apply smoothing force to every point
-*/
-void Maze::_smoothing(){
-    
-    Point p0, p2;
-    double d0, d2;
+void Maze::_smoothing(int index)
+{
+    int i0 = index - 1;
+    int i2 = index + 1;
 
-    // set previous distance to back-to-front distance
-    p0 = points.back();
-    d0 = points.front().distance(p0);
-
-    // update points except last point
-    for(int i = 0; i < points.size()-1; i++){
-
-        if(points[i].frozen){
-            continue;
-        }
-
-        p2 = points[i+1];
-        d2 = points[i].distance(p2);
-
-        points[i].dx += this->config.F * ((p0.x*d2 + p2.x*d0)/(d0+d2) - points[i].x);
-        points[i].dy += this->config.F * ((p0.y*d2 + p2.y*d0)/(d0+d2) - points[i].y);
-
-        // use "next" distance as the next "previous" distance
-        //   ex: distance between p0 and p1 is used for updating p0 and p1
-        p0 = points[i];
-        d0 = d2;
+    // Avoid index out-of-bounds
+    if (index == 0)
+    {
+        i0 = points.size() - 1;
+    }
+    else if (index == points.size() - 1)
+    {
+        i2 = 0;
     }
 
-    // update the final point
-    p2 = points.front();
+    Point* p0 = &points[i0];
+    Point* p1 = &points[index];
+    Point* p2 = &points[i2];
+    double d0 = p1->distance(*p0);
+    double d2 = p1->distance(*p2);
 
-    if(points.back().frozen){
-        return;
-    }
-
-    d2 = points.back().distance(p2);
-
-    points.back().dx += this->config.F * ((p0.x*d2 + p2.x*d0)/(d0+d2) - points.back().x);
-    points.back().dy += this->config.F * ((p0.y*d2 + p2.y*d0)/(d0+d2) - points.back().y);
+    p1->dx += this->config.F * ((p0->x*d2 + p2->x*d0)/(d0+d2) - p1->x);
+    p1->dy += this->config.F * ((p0->y*d2 + p2->y*d0)/(d0+d2) - p1->y);
 }
 
-
-/*
-Calculate proximity force on one point
-*/
-void Maze::_proximityForce(Point& point, const Point& p0, const Point& p1, int& counter){
-
+void Maze::_proximity_force(Point& point, const Point& p0, const Point& p1, int& counter)
+{
     Point close = closest(p0, p1, point);
 
     if ((fabs(close.x - point.x) + fabs(close.y - point.y) > this->config.R1)) {
@@ -119,73 +88,80 @@ void Maze::_proximityForce(Point& point, const Point& p0, const Point& p1, int& 
 /*
 Apply proximity force to each point in the vector --> this looks at every other point!
 */
-void Maze::_proximity(int skip){
+void Maze::_proximity(int index, int skip){
     
-    int counter;
+    int counter = 0;
 
-    for(int i = 0; i < points.size(); i++){
+    // process other points in maze
+    for(int j = 0; j < points.size(); j++){
 
-        if(points[i].frozen){
+        // skip adjacent indices
+        if(abs(index-j) <= skip || abs(index-(j+1)) <= skip || abs(index-j) >= points.size()-skip || abs(index-(j+1)) >= points.size()-skip){
             continue;
         }
 
-        // reset the counter
-        counter = 0;
+        _proximity_force(points[index], points[j], points[(j+1)%points.size()], counter);
+    }
 
-        // process other points in maze
-        for(int j = 0; j < points.size(); j++){
-
-            // skip adjacent indices
-            if(abs(i-j) <= skip || abs(i-(j+1)) <= skip || abs(i-j) >= points.size()-skip || abs(i-(j+1)) >= points.size()-skip){
-                continue;
-            }
-
-            _proximityForce(points[i], points[j], points[(j+1)%points.size()], counter);
-        }
-
-        // process the boundaries
-        for(int j = 0; j < boundary.size(); j++){
-            _proximityForce(points[i], boundary[j], boundary[(j+1)%boundary.size()], counter);
-        }
+    // process the boundaries
+    for(int j = 0; j < boundary.size(); j++){
+        _proximity_force(points[index], boundary[j], boundary[(j+1)%boundary.size()], counter);
+    }
         
-        double force = points[i].dx * points[i].dx + points[i].dy * points[i].dy;
+    double force = points[index].dx * points[index].dx + points[index].dy * points[index].dy;
 
-        if(force > config.MAX * config.MAX){
-            force = sqrt(force);
+    if(force > config.MAX * config.MAX){
+        force = sqrt(force);
 
-            points[i].dx = points[i].dx/force * config.MAX;
-            points[i].dy = points[i].dy/force * config.MAX;
-        }
+        points[index].dx = points[index].dx/force * config.MAX;
+        points[index].dy = points[index].dy/force * config.MAX;
+    }
 
-        // freeze the point if there are enough points close to it
-        if(counter > config.freeze){
-            points[i].frozen = true;
-        }
+    // freeze the point if there are enough points close to it
+    if(counter > config.freeze){
+        points[index].frozen = true;
     }
 }
 
+
+void Maze::_calculate_force(int index)
+{
+    if (points[index].frozen) return;
+    _proximity(index);
+    _brownian(index);
+    _smoothing(index);
+}
 
 /*
 Apply the maze forces to each point
 */
 void Maze::update(){
 
-    _proximity();
-    _brownian();
-    _smoothing();
+    std::vector<std::future<void>> tasks;
+    tasks.reserve(points.size());
 
-    int alive = 0;
-    
-    // update the points from the forces
-    for(int i = 0; i < points.size(); i++){        
-        if(points[i].frozen){
-            continue;
-        }
-        points[i].update();
-        alive++;
+    for (int i = 0; i < points.size(); i++)
+    {
+        tasks.emplace_back(std::async(&Maze::_calculate_force, this, i));
     }
 
-    std::cout << "NODES: " << points.size() << " AVAILABLE: " << alive << std::endl;
+    for (auto& task : tasks)
+    {
+        task.wait();
+    }
+    
+    // update the points from the forces
+    for(int i = 0; i < points.size(); i++)
+    {        
+        tasks.at(i) = std::async([this](int index) { points[index].update(); }, i);
+    }
+
+    for (auto& task : tasks)
+    {
+        task.wait();
+    }
+
+    printf("NODES: %d ALIVE: %d\n", points.size(), -1);
 }
 
 
