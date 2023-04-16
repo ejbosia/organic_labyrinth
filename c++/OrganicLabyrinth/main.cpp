@@ -11,10 +11,10 @@
 
 #include <stdio.h>
 
-#define ITERATIONS 251
+#define ITERATIONS 2001
 
 #define SAVE true
-#define SAVE_ITERATION 2
+#define SAVE_ITERATION 4
 
 #define ERR_NONE 0
 #define ERR_BOUNDARY_FILE_NF     -1
@@ -69,11 +69,11 @@ int main(int argc, char** argv){
 
     // brownian, smoothing, push pull
     Config config = Config();
-    //config.freeze = 300;
+    config.freeze = 160;
 
     std::ofstream myfile;
 
-    Maze maze(config, points, boundary);
+    Maze maze(config, points);
 
     for(int i = 0; i < ITERATIONS; i++){
         maze.resample();

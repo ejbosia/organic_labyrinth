@@ -1,6 +1,4 @@
-
-#ifndef ANGLE_H
-#define ANGLE_H
+#pragma once
 
 #include <ostream>
 
@@ -34,5 +32,3 @@ class Angle{
         friend std::ostream& operator<<(std::ostream &strm, const Angle &a);
 
 };
-
-#endif

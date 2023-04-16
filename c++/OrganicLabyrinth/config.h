@@ -1,6 +1,4 @@
-
-#ifndef CONFIG_H
-#define CONFIG_H
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -30,5 +28,3 @@ struct Config{
     Config(double B, double F,double A, double k0, double k1, double kmin, double kmax,double D, double MAX, int freeze = INT32_MAX);
 
 };
-
-#endif

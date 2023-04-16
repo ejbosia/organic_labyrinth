@@ -4,7 +4,8 @@
 Point::Point() : x(0.), y(0.), frozen(false), dx(0.), dy(0.){}
 Point::Point(double x, double y) : x(x), y(y), frozen(false), dx(0.), dy(0.) {}
 
-double Point::sq_distance(const Point &other){
+
+double Point::sq_distance(const Point &other) const{
     double dx = x - other.x;
     double dy = y - other.y;
 
@@ -14,7 +15,7 @@ double Point::sq_distance(const Point &other){
 /*
 Return the distance to another point
 */
-double Point::distance(const Point &other){
+double Point::distance(const Point &other) const{
     return sqrt(sq_distance(other));
 }
 
@@ -122,7 +123,7 @@ bool Point::operator==(const Point &p){
  }
 
 std::ostream& operator<<(std::ostream &strm, const Point &p){
-    return strm << round(p.x*1000.0)/1000.0 << "," <<  round(p.y*1000.0)/1000.0;
+    return strm << round(p.x*1000.0)/1000.0 << "," <<  round(p.y*1000.0)/1000.0 << "," << p.frozen;
 }
 
 /*

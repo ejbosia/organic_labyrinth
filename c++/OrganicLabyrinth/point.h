@@ -1,12 +1,16 @@
-
-#ifndef POINT_H
-#define POINT_H
+#pragma once
 
 #include <iostream>
 #include <string>
 #include <math.h>
 
 #include "angle.h"
+
+enum ResampleAction : char {
+    NONE,
+    REMOVE,
+    ADD
+};
 
 struct Point{
 
@@ -15,13 +19,15 @@ struct Point{
     
     bool frozen;
 
+    ResampleAction action;
+
     // store the adjustments
     double dx,dy;
     Point();
     Point(double x, double y);
-    
-    double sq_distance(const Point& other);
-    double distance(const Point& other);
+
+    double sq_distance(const Point& other) const;
+    double distance(const Point& other) const;
     Angle angle(Point& other);
 
     double xRotation(Angle& angle);
@@ -45,5 +51,3 @@ struct Point{
 
 Point bisect(const Point& A, const Point& B);
 Point closest(const Point& A, const Point& B, const Point& C);
-
-#endif

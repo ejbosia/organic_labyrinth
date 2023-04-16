@@ -165,45 +165,82 @@ void Maze::update(){
 }
 
 
+void Maze::_add_or_remove(Point* p1, const Point* p2)
+{
+    //if (p1->frozen && p2->frozen)
+    //{
+    //    //p1->action = ResampleAction::NONE;
+    //    return;
+    //}
+
+    double distance = p1->distance(*p2);
+
+    if (distance > this->config.dmax) 
+    {
+        p1->action = ResampleAction::ADD;
+        return;
+    }
+    if (distance < this->config.dmin) 
+    {
+        p1->action = ResampleAction::REMOVE;
+        return;
+    }
+
+    p1->action = ResampleAction::NONE;
+}
+
+
 /*
 Add points to the linked list of points
 */
-void Maze::resample(){
-    
-    double distance{0};
+void Maze::resample() {
+
+    double distance{ 0 };
+
     Point* p1;
     Point* p2;
 
-    for(int i = 0; i < points.size(); i++){
-        if (i == 0) 
-        {
-            p1 = &points.back();
-            p2 = &points.front();
-        }
-        else
-        {
-            p1 = &points.at(i - 1);
-            p2 = &points.at(i);
-        }
+    std::vector<std::future<void>> tasks;
+    tasks.reserve(points.size());
 
-        if (p1->frozen && p2->frozen) 
-        {
-            continue;
-        }
+    p1 = &points.back();
+    p2 = &points.front();
 
-        distance = p1->distance(*p2);
-            
-        // insert new point if distance is > dmax threshold
-        if(distance > this->config.dmax){
-            points.insert(points.begin() + i, bisect(*p1, *p2));
-            i++;    // do not reevaluate this point
-        }
-        // remove point if the distance between it and the previous point is too low
-        else if(distance < this->config.dmin){
-            points.erase(points.begin()+i);
-            i--;    // reevalute this index (now a new point)
+    tasks.emplace_back(std::async(&Maze::_add_or_remove, this, p1, p2));
+
+    for (int i = 1; i < points.size(); i++)
+    {
+        p1 = p2;
+        p2 = &points.at(i);
+        tasks.emplace_back(std::async(&Maze::_add_or_remove, this, p1, p2));
+    }
+
+    for (auto& task : tasks)
+    {
+        task.wait();
+    }
+
+    std::vector<Point> temp;
+    temp.reserve(points.size());
+
+    for (int i = 0; i < points.size(); i++)
+    {
+        switch (points.at(i).action)
+        {
+        case ResampleAction::NONE:
+            temp.emplace_back(points.at(i));
+            break;
+        case ResampleAction::REMOVE:
+            break;
+        case ResampleAction::ADD:
+            temp.emplace_back(points.at(i));
+            temp.emplace_back(bisect(points[i], points[(i + 1) % points.size()]));
+            break;
         }
     }
+
+    points.resize(temp.size());
+    std::move(std::begin(temp), std::end(temp), std::begin(points));
 }
 
 /*
@@ -211,7 +248,7 @@ Output all of the points in a string in csv format
 */
 std::string Maze::output(){
     std::stringstream output;
-    output << "x,y\n";
+    output << "x,y,frozen\n";
     for(const auto& point : points){
         output << point << "\n";
     }
