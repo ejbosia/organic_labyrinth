@@ -13,7 +13,7 @@ struct Point{
     double x;
     double y;
     
-    bool available;
+    bool frozen;
 
     // store the adjustments
     double dx,dy;
@@ -36,6 +36,8 @@ struct Point{
     void rotate(Angle& angle);
     void rotate(Point& point, Angle& angle);
 
+    Point operator+(const Point& p);
+    Point operator-(const Point& p);
     bool operator==(const Point &p);
 
     friend std::ostream& operator<<(std::ostream &strm, const Point &p);

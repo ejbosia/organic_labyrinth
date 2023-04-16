@@ -20,9 +20,7 @@ class Angle{
         double degrees();
         void rotateAngle(double angle);
         void setAngle(double angle);
-
         bool parallel(double angle);
-
 
         // trig functions
         double sine();

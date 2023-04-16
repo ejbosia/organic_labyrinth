@@ -1,8 +1,8 @@
 #include "point.h"
 
 
-Point::Point() : x(0.), y(0.), available(true){}
-Point::Point(double x, double y) : x(x), y(y), available(true){}
+Point::Point() : x(0.), y(0.), frozen(false), dx(0.), dy(0.){}
+Point::Point(double x, double y) : x(x), y(y), frozen(false), dx(0.), dy(0.) {}
 
 double Point::sq_distance(const Point &other){
     double dx = x - other.x;
@@ -105,11 +105,6 @@ void Point::update(){
     dx = dy = 0;
 }
 
-/*
-
-OPERATOR OVERLOADS
-
-*/
 bool Point::operator==(const Point &p){
 
     bool x_equiv = fabs(x-p.x) < 2*std::numeric_limits<double>::epsilon();
@@ -118,16 +113,16 @@ bool Point::operator==(const Point &p){
     return x_equiv && y_equiv;
 }
 
-// Point Point::operator+(const Point &p){
-//     return Point(x+p.x, y+p.y);
-// }
+ Point Point::operator+(const Point &p){
+     return Point(x+p.x, y+p.y);
+ }
 
-// Point Point::operator-(const Point &p){
-//     return Point(x-p.x, y-p.y);
-// }
+ Point Point::operator-(const Point &p){
+     return Point(x-p.x, y-p.y);
+ }
 
 std::ostream& operator<<(std::ostream &strm, const Point &p){
-    return strm << "(" << round(p.x*1000.0)/1000.0 << "," <<  round(p.y*1000.0)/1000.0  << ")";
+    return strm << round(p.x*1000.0)/1000.0 << "," <<  round(p.y*1000.0)/1000.0;
 }
 
 /*
@@ -140,11 +135,8 @@ Non-class point functions
 Return the midpoint of two points
 */
 Point bisect(const Point& A, const Point& B){
-
-    return Point(
-                    0.5*(B.x - A.x)+A.x,
-                    0.5*(B.y - A.y)+A.y
-                );
+    return Point(0.5*(B.x - A.x)+A.x,
+                 0.5*(B.y - A.y)+A.y);
 }
 
 
@@ -172,8 +164,6 @@ Point closest(const Point& A, const Point& B, const Point& C){
         return B;
     }
 
-    return Point(
-        A.x + dot * x1 / length,
-        A.y + dot * y1 / length
-    );
+    return Point(A.x + dot * x1 / length,
+                 A.y + dot * y1 / length);
 }
