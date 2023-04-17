@@ -25,6 +25,11 @@ Apply brownian force to every point in vector
 */
 void Maze::_brownian(int index)
 {
+    if (points[index].frozen)
+    {
+        return;
+    }
+
     double n = normal(generator);
     double a = distribution(generator);
 
@@ -124,11 +129,10 @@ void Maze::_proximity(int index, int skip){
 }
 
 
-void Maze::_calculate_force(int index)
+void Maze::_calculate_force_async(int index)
 {
     if (points[index].frozen) return;
     _proximity(index);
-    _brownian(index);
     _smoothing(index);
 }
 
@@ -140,38 +144,36 @@ void Maze::update(){
     std::vector<std::future<void>> tasks;
     tasks.reserve(points.size());
 
+    // We need to apply the brownian force synchronously because the random number generator
+    // is not thread safe.
     for (int i = 0; i < points.size(); i++)
     {
-        tasks.emplace_back(std::async(&Maze::_calculate_force, this, i));
+        _brownian(i);
     }
 
-    for (auto& task : tasks)
+    // The smoothing and push-pull forces can be applied asynchronously.
+    for (int i = 0; i < points.size(); i++)
     {
-        task.wait();
+        tasks.emplace_back(std::async(&Maze::_calculate_force_async, this, i));
     }
+    for (auto& task : tasks){ task.wait(); }
     
-    // update the points from the forces
+    // Update the points from the forces
     for(int i = 0; i < points.size(); i++)
     {        
         tasks.at(i) = std::async([this](int index) { points[index].update(); }, i);
     }
-
-    for (auto& task : tasks)
-    {
-        task.wait();
-    }
-
-    printf("NODES: %d ALIVE: %d\n", points.size(), -1);
+    for (auto& task : tasks) { task.wait(); }
 }
 
 
 void Maze::_add_or_remove(Point* p1, const Point* p2)
 {
-    //if (p1->frozen && p2->frozen)
-    //{
-    //    //p1->action = ResampleAction::NONE;
-    //    return;
-    //}
+    if (p1->frozen && p2->frozen)
+    {
+        p1->action = ResampleAction::NONE;
+        return;
+    }
 
     double distance = p1->distance(*p2);
 

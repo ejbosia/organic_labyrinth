@@ -33,7 +33,7 @@ private:
     void _smoothing(int index);
     void _proximity(int index, int skip=1);
     void _proximity_force(Point& point, const Point& p0, const Point& p1, int& counter);
-    void _calculate_force(int index);
+    void _calculate_force_async(int index);
 
     void _add_or_remove(Point* p1, const Point* p2);
 };

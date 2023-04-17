@@ -11,7 +11,7 @@
 
 #include <stdio.h>
 
-#define ITERATIONS 2001
+#define ITERATIONS 501
 
 #define SAVE true
 #define SAVE_ITERATION 4
@@ -19,6 +19,21 @@
 #define ERR_NONE 0
 #define ERR_BOUNDARY_FILE_NF     -1
 #define ERR_BOUNDARY_FILE_FORMAT -2
+
+
+class Timer {
+public:
+    Timer() : _start_time(std::chrono::high_resolution_clock::now()) {}
+    ~Timer() {
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - _start_time);
+        std::cout << "Elapsed time: " << elapsed_time.count() << "ms\n";
+    }
+
+private:
+    std::chrono::time_point<std::chrono::high_resolution_clock> _start_time;
+};
+
 
 int read_boundary_file(const std::string& filepath, std::vector<Point>& points) {
     std::ifstream file(filepath);
@@ -75,20 +90,24 @@ int main(int argc, char** argv){
 
     Maze maze(config, points);
 
-    for(int i = 0; i < ITERATIONS; i++){
-        maze.resample();
-        maze.update();
+    {
+        Timer timer{};
+        for (int i = 0; i < ITERATIONS; i++) {
+            maze.resample();
+            maze.update();
 
-        std::cout << " ITERATIONS: " <<  i << std::endl;
+            std::cout << " ITERATIONS: " << i << std::endl;
 
-        if(SAVE && (i % SAVE_ITERATION == 0)){
+            if (SAVE && (i % SAVE_ITERATION == 0)) {
 
-            myfile.open ("results/" + std::format("iteration_{:04}", i) + ".csv");
-            myfile << maze.output();
-            myfile.close();  
+                myfile.open("results/" + std::format("iteration_{:04}", i) + ".csv");
+                myfile << maze.output();
+                myfile.close();
+            }
         }
     }
-    
+
+    std::cin.get();
     return 0;
 }
 
